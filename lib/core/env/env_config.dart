@@ -1,13 +1,3 @@
-/// -----------------------------------------------------------------------------
-/// env_config.dart
-/// -----------------------------------------------------------------------------
-/// Environment configuration using Envied.
-///
-/// - Loads variables from .env files
-/// - Supports different environments (dev, prod, staging)
-/// - Obfuscates sensitive values
-/// - Provides type-safe access to environment variables
-/// -----------------------------------------------------------------------------
 import 'package:envied/envied.dart';
 
 part 'env_config.g.dart';

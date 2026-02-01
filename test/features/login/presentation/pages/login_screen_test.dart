@@ -73,10 +73,7 @@ void main() {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const LoginScreen(),
-        ),
+        GoRoute(path: '/', builder: (context, state) => const LoginScreen()),
       ],
     );
 

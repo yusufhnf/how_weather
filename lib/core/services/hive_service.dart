@@ -1,12 +1,3 @@
-/// hive_service.dart
-/// -----------------------------------------------------------------------------
-/// Service for local data persistence using Hive.
-///
-/// - Provides a simple key-value storage interface
-/// - Supports typed data retrieval and lists
-/// - Handles serialization/deserialization of data
-/// - Used for caching and offline-first features
-/// -----------------------------------------------------------------------------
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 

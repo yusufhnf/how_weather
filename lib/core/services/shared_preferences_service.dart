@@ -1,13 +1,3 @@
-/// -----------------------------------------------------------------------------
-/// shared_preferences_service.dart
-/// -----------------------------------------------------------------------------
-/// Service for local data persistence using SharedPreferences.
-///
-/// - Provides a simple key-value storage interface for primitive types
-/// - Supports String, int, double, bool, and List<String> types
-/// - Handles serialization/deserialization of data
-/// - Used for simple caching and offline-first features
-/// -----------------------------------------------------------------------------
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
