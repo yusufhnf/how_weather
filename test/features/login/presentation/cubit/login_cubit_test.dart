@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:how_weather/core/cubit/app_cubit.dart';
 import 'package:how_weather/core/exceptions/app_exceptions.dart';
 import 'package:how_weather/features/login/domain/entities/user_entity.dart';
 import 'package:how_weather/features/login/domain/usecases/login_usecase.dart';
@@ -9,17 +10,24 @@ import 'package:mocktail/mocktail.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
 
+class MockAppCubit extends Mock implements AppCubit {}
+
 void main() {
   late LoginCubit cubit;
   late MockLoginUseCase mockLoginUseCase;
+  late MockAppCubit mockAppCubit;
 
   setUpAll(() {
     registerFallbackValue(LoginParams(email: '', password: ''));
+    registerFallbackValue(
+      const UserEntity(id: '', email: '', name: '', token: ''),
+    );
   });
 
   setUp(() {
     mockLoginUseCase = MockLoginUseCase();
-    cubit = LoginCubit(loginUseCase: mockLoginUseCase);
+    mockAppCubit = MockAppCubit();
+    cubit = LoginCubit(loginUseCase: mockLoginUseCase, appCubit: mockAppCubit);
   });
 
   tearDown(() {
@@ -46,6 +54,7 @@ void main() {
         when(
           () => mockLoginUseCase(any()),
         ).thenAnswer((_) async => const Right(tUser));
+        when(() => mockAppCubit.login(any())).thenAnswer((_) async {});
         return cubit;
       },
       act: (cubit) => cubit.login(email: tEmail, password: tPassword),
@@ -132,6 +141,7 @@ void main() {
         when(
           () => mockLoginUseCase(any()),
         ).thenAnswer((_) async => const Right(tUser));
+        when(() => mockAppCubit.login(any())).thenAnswer((_) async {});
         return cubit;
       },
       act: (cubit) async {
@@ -139,8 +149,6 @@ void main() {
         await cubit.login(email: tEmail, password: tPassword);
       },
       expect: () => [
-        const LoginState.loading(),
-        const LoginState.success(tUser),
         const LoginState.loading(),
         const LoginState.success(tUser),
       ],

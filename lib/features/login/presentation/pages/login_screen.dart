@@ -41,10 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
           listener: (context, state) {
             state.maybeWhen(
               success: (user) {
-                context.read<AppCubit>().login(
-                  token: user.token,
-                  userId: user.id,
-                );
                 context.showSnackBar(context.loc.loginSuccess(user.name));
                 context.replace(AppRouter.dashboardRoute);
               },

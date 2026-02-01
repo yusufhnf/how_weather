@@ -21,6 +21,7 @@ abstract class I18n {
 
   // Auth
   String get logout;
+  String get logoutConfirmation;
   String get login;
   String get register;
   String get email;
@@ -31,6 +32,17 @@ abstract class I18n {
   String get welcomeBack;
   String get signInToContinue;
   String get loginHint;
+
+  // Settings
+  String get theme;
+  String get language;
+  String get lightTheme;
+  String get darkTheme;
+  String get systemTheme;
+  String get english;
+  String get indonesian;
+  String get selectTheme;
+  String get selectLanguage;
 
   // Messages
   String get noDataAvailable;
@@ -118,6 +130,9 @@ class I18nEn implements I18n {
   String get logout => 'Logout';
 
   @override
+  String get logoutConfirmation => 'Are you sure you want to logout?';
+
+  @override
   String get login => 'Login';
 
   @override
@@ -146,6 +161,34 @@ class I18nEn implements I18n {
 
   @override
   String get loginHint => 'Hint: admin@meetucup.com / admin1234';
+
+  // Settings
+  @override
+  String get theme => 'Theme';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get lightTheme => 'Light';
+
+  @override
+  String get darkTheme => 'Dark';
+
+  @override
+  String get systemTheme => 'System';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get indonesian => 'Indonesian';
+
+  @override
+  String get selectTheme => 'Select Theme';
+
+  @override
+  String get selectLanguage => 'Select Language';
 
   @override
   String get noDataAvailable => 'No data available';
@@ -293,6 +336,9 @@ class I18nId implements I18n {
   String get logout => 'Keluar';
 
   @override
+  String get logoutConfirmation => 'Apakah Anda yakin ingin keluar?';
+
+  @override
   String get login => 'Masuk';
 
   @override
@@ -321,6 +367,34 @@ class I18nId implements I18n {
 
   @override
   String get loginHint => 'Petunjuk: admin@meetucup.com / admin1234';
+
+  // Settings
+  @override
+  String get theme => 'Tema';
+
+  @override
+  String get language => 'Bahasa';
+
+  @override
+  String get lightTheme => 'Terang';
+
+  @override
+  String get darkTheme => 'Gelap';
+
+  @override
+  String get systemTheme => 'Sistem';
+
+  @override
+  String get english => 'Inggris';
+
+  @override
+  String get indonesian => 'Indonesia';
+
+  @override
+  String get selectTheme => 'Pilih Tema';
+
+  @override
+  String get selectLanguage => 'Pilih Bahasa';
 
   @override
   String get noDataAvailable => 'Tidak ada data tersedia';

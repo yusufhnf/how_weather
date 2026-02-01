@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
-      value: GetIt.I<AppCubit>(),
+      value: GetIt.I<AppCubit>()..init(),
       child: BlocBuilder<AppCubit, AppState>(
         builder: (context, appState) {
           return ScreenUtilInit(
@@ -40,9 +41,14 @@ class MyApp extends StatelessWidget {
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: appState.themeMode,
-                routerConfig: AppRouter.router,
+                routerConfig: AppRouter.router(GetIt.I<AppCubit>()),
                 locale: appState.locale,
-                localizationsDelegates: const [I18nDelegate()],
+                localizationsDelegates: [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                  const I18nDelegate(),
+                ],
                 supportedLocales: I18nDelegate.supportedLocales,
               );
             },

@@ -1,3 +1,4 @@
+export 'app_settings_service.dart';
 export 'hive_service.dart';
 export 'http_client_service.dart';
 export 'internet_connection_service.dart';

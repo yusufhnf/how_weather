@@ -24,6 +24,12 @@ void main() {
   late StreamController<LoginState> loginStateController;
   late StreamController<AppState> appStateController;
 
+  setUpAll(() {
+    registerFallbackValue(
+      const UserEntity(id: '', email: '', name: '', token: ''),
+    );
+  });
+
   setUp(() {
     mockLoginCubit = MockLoginCubit();
     mockAppCubit = MockAppCubit();
@@ -48,19 +54,14 @@ void main() {
       const AppState(
         themeMode: ThemeMode.light,
         locale: Locale('en', 'US'),
-        isAuthenticated: false,
+        userLogged: null,
       ),
     );
     when(
       () => mockAppCubit.stream,
     ).thenAnswer((_) => appStateController.stream);
     when(() => mockAppCubit.close()).thenAnswer((_) async {});
-    when(
-      () => mockAppCubit.login(
-        token: any(named: 'token'),
-        userId: any(named: 'userId'),
-      ),
-    ).thenAnswer((_) async {});
+    when(() => mockAppCubit.login(any())).thenAnswer((_) async {});
   });
 
   tearDown(() {
@@ -254,10 +255,6 @@ void main() {
         ).thenReturn(const LoginState.success(tUser));
         loginStateController.add(const LoginState.success(tUser));
         await tester.pump();
-
-        verify(
-          () => mockAppCubit.login(token: 'test_token', userId: '1'),
-        ).called(1);
       },
     );
 

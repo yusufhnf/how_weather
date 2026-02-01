@@ -46,9 +46,13 @@ class DashboardAppBar extends StatelessWidget {
     final weatherMain = currentForecast?.weather?.firstOrNull?.main;
     final weatherIcon = _getWeatherIcon(weatherMain);
     return SliverAppBar(
-      expandedHeight: AppDimensions.height300,
+      expandedHeight: AppDimensions.height367,
       floating: false,
       pinned: true,
+      leading: IconButton(
+        icon: Icon(Icons.menu, color: AppColors.white),
+        onPressed: () => Scaffold.of(context).openDrawer(),
+      ),
       title: isCollapsed
           ? Row(
               children: [
@@ -124,16 +128,15 @@ class DashboardAppBar extends StatelessWidget {
                         ],
                       ),
                     ),
-
+                  Icon(
+                    weatherIcon,
+                    size: AppDimensions.style60,
+                    color: AppColors.secondary,
+                  ),
+                  SizedBox(width: AppDimensions.height16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(
-                        weatherIcon,
-                        size: AppDimensions.style60,
-                        color: AppColors.secondary,
-                      ),
-                      SizedBox(width: AppDimensions.width16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

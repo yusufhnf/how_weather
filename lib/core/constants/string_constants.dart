@@ -10,4 +10,12 @@ class StringConstants {
   static const String slash = '/';
   static const String hyphen = '-';
   static const String underscore = '_';
+
+  // Shared Preferences Keys
+  static const String userIdKey = 'user_id';
+  static const String userEmailKey = 'user_email';
+  static const String userNameKey = 'user_name';
+  static const String userTokenKey = 'user_token';
+  static const String themeModeKey = 'theme_mode';
+  static const String localeKey = 'locale';
 }
