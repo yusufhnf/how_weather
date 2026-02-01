@@ -117,8 +117,12 @@ test/
    ```
 
 2. **Add environment variables**
-   - Copy `.env.example` to `.env` and fill in required values (API keys, etc.)
-   - If using multiple environments, create `.env.dev`, `.env.prod`, etc.
+   - Create `.env` file in the root of project and fill in required values (API keys, etc.)
+   - Example `.env` content:
+     ```env
+     WEATHER_API_KEY=your_api_key_here
+     ```
+   - If using multiple environments, create `.env.dev`, `.env.prod`, etc. with similar structure and values as needed.
 
 3. **Clean and get dependencies**
    ```bash
