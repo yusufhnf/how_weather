@@ -24,7 +24,10 @@ void main() {
   setUp(() {
     // Set up larger test window size to prevent layout overflow
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.platformDispatcher.views.first.physicalSize = const Size(1080, 1920);
+    binding.platformDispatcher.views.first.physicalSize = const Size(
+      1080,
+      1920,
+    );
     binding.platformDispatcher.views.first.devicePixelRatio = 1.0;
 
     mockDashboardCubit = MockDashboardCubit();
