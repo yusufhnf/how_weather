@@ -8,15 +8,6 @@ import 'package:talker/talker.dart';
 @module
 abstract class RegisterModule {
   @lazySingleton
-  Dio get dio => Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-    ),
-  );
-
-  @lazySingleton
   Talker get talker => Talker();
 
   @lazySingleton
@@ -30,4 +21,14 @@ abstract class RegisterModule {
   Future<HiveInterface> get hive async {
     return Hive;
   }
+
+  @Named('openWeatherAPI')
+  Dio dio() => Dio(
+    BaseOptions(
+      baseUrl: 'https://api.openweathermap.org',
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ),
+  );
 }
