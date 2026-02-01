@@ -1,42 +1,121 @@
-import 'package:hive/hive.dart';
+/// hive_service.dart
+/// -----------------------------------------------------------------------------
+/// Service for local data persistence using Hive.
+///
+/// - Provides a simple key-value storage interface
+/// - Supports typed data retrieval and lists
+/// - Handles serialization/deserialization of data
+/// - Used for caching and offline-first features
+/// -----------------------------------------------------------------------------
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 
-@lazySingleton
-class HiveService {
-  final HiveInterface _hive;
-  Box? _box;
+abstract class HiveService {
+  Future<void> put({required String key, required dynamic value});
+  Future<dynamic> get({required String key});
+  Future<T?> getTyped<T>({required String key});
+  Future<List<T>> getList<T>({required String key});
+  Future<void> delete({required String key});
+  Future<int> clear();
+  Future<bool> containsKey({required String key});
+  Future<List<String>> getKeys();
+}
 
-  HiveService(this._hive);
+@LazySingleton(as: HiveService)
+class HiveServiceImpl implements HiveService {
+  final Box<dynamic> _hive;
 
-  Future<void> init(String boxName) async {
-    _box = await _hive.openBox(boxName);
+  HiveServiceImpl({required Box<dynamic> hive}) : _hive = hive;
+
+  @override
+  Future<int> clear() async {
+    try {
+      return await _hive.clear();
+    } catch (e) {
+      throw HiveStorageException('Failed to clear hive storage: $e');
+    }
   }
 
-  Future<void> put(String key, dynamic value) async {
-    await _box?.put(key, value);
+  @override
+  Future<void> delete({required String key}) async {
+    try {
+      return await _hive.delete(key);
+    } catch (e) {
+      throw HiveStorageException('Failed to delete key "$key": $e');
+    }
   }
 
-  T? get<T>(String key, {T? defaultValue}) {
-    return _box?.get(key, defaultValue: defaultValue) as T?;
+  @override
+  Future<dynamic> get({required String key}) async {
+    try {
+      return _hive.get(key);
+    } catch (e) {
+      throw HiveStorageException('Failed to get value for key "$key": $e');
+    }
   }
 
-  bool containsKey(String key) {
-    return _box?.containsKey(key) ?? false;
+  @override
+  Future<T?> getTyped<T>({required String key}) async {
+    try {
+      final value = _hive.get(key);
+      if (value == null) return null;
+      if (value is T) return value;
+      throw HiveStorageException('Value for key "$key" is not of type $T');
+    } catch (e) {
+      if (e is HiveStorageException) rethrow;
+      throw HiveStorageException(
+        'Failed to get typed value for key "$key": $e',
+      );
+    }
   }
 
-  Future<void> delete(String key) async {
-    await _box?.delete(key);
+  @override
+  Future<List<T>> getList<T>({required String key}) async {
+    try {
+      final value = _hive.get(key);
+      if (value == null) return <T>[];
+      if (value is List) {
+        return value.cast<T>();
+      }
+      throw HiveStorageException('Value for key "$key" is not a List');
+    } catch (e) {
+      if (e is HiveStorageException) rethrow;
+      throw HiveStorageException('Failed to get list for key "$key": $e');
+    }
   }
 
-  Future<void> clear() async {
-    await _box?.clear();
+  @override
+  Future<void> put({required String key, required dynamic value}) async {
+    try {
+      await _hive.put(key, value);
+    } catch (e) {
+      throw HiveStorageException('Failed to put value for key "$key": $e');
+    }
   }
 
-  List<dynamic> getAll() {
-    return _box?.values.toList() ?? [];
+  @override
+  Future<bool> containsKey({required String key}) async {
+    try {
+      return _hive.containsKey(key);
+    } catch (e) {
+      throw HiveStorageException('Failed to check if key "$key" exists: $e');
+    }
   }
 
-  Map<dynamic, dynamic> getAllAsMap() {
-    return _box?.toMap() ?? {};
+  @override
+  Future<List<String>> getKeys() async {
+    try {
+      return _hive.keys.cast<String>().toList();
+    } catch (e) {
+      throw HiveStorageException('Failed to get keys: $e');
+    }
   }
+}
+
+class HiveStorageException implements Exception {
+  final String message;
+  HiveStorageException(this.message);
+
+  @override
+  String toString() => 'HiveStorageException: $message';
 }

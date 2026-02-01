@@ -10,14 +10,41 @@ class DashboardAppBar extends StatelessWidget {
     required this.isCollapsed,
     this.city,
     this.currentForecast,
+    this.lastUpdated,
   });
 
   final bool isCollapsed;
   final City? city;
   final WeatherForecast? currentForecast;
+  final DateTime? lastUpdated;
+
+  IconData _getWeatherIcon(String? main) {
+    switch (main) {
+      case 'Clear':
+        return Icons.wb_sunny;
+      case 'Clouds':
+        return Icons.cloud;
+      case 'Rain':
+        return Icons.grain;
+      case 'Snow':
+        return Icons.ac_unit;
+      case 'Thunderstorm':
+        return Icons.flash_on;
+      case 'Drizzle':
+        return Icons.grain;
+      case 'Mist':
+      case 'Fog':
+      case 'Haze':
+        return Icons.blur_on;
+      default:
+        return Icons.wb_sunny;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final weatherMain = currentForecast?.weather?.firstOrNull?.main;
+    final weatherIcon = _getWeatherIcon(weatherMain);
     return SliverAppBar(
       expandedHeight: AppDimensions.height300,
       floating: false,
@@ -26,8 +53,8 @@ class DashboardAppBar extends StatelessWidget {
           ? Row(
               children: [
                 Icon(
-                  Icons.wb_sunny,
-                  color: const Color.fromARGB(255, 37, 36, 21),
+                  weatherIcon,
+                  color: AppColors.secondary,
                   size: AppDimensions.style24,
                 ),
                 SizedBox(width: AppDimensions.width8),
@@ -35,17 +62,17 @@ class DashboardAppBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${city?.name ?? 'Unknown'}, ${city?.country ?? ''}',
+                      '${city?.name ?? context.loc.unknown}, ${city?.country ?? ''}',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: AppDimensions.style16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      '${currentForecast?.weather?.firstOrNull?.description ?? 'Unknown'} • ${currentForecast?.main?.temp != null ? '${currentForecast!.main!.temp!.toStringAsFixed(1)}°C' : 'N/A'}',
+                      '${currentForecast?.weather?.firstOrNull?.description ?? context.loc.unknown} • ${currentForecast?.main?.temp != null ? '${currentForecast!.main!.temp!.toStringAsFixed(1)}°C' : context.loc.notAvailable}',
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: AppColors.grey200,
                         fontSize: AppDimensions.style12,
                       ),
                     ),
@@ -60,7 +87,7 @@ class DashboardAppBar extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.blue.shade400, Colors.blue.shade600],
+              colors: [AppColors.primary, AppColors.primaryDark],
             ),
           ),
           child: SafeArea(
@@ -75,13 +102,36 @@ class DashboardAppBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (lastUpdated != null)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: AppDimensions.height8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sync,
+                            size: AppDimensions.style14,
+                            color: AppColors.white,
+                          ),
+                          SizedBox(width: AppDimensions.width5),
+                          Text(
+                            '${context.loc.lastUpdated} ${lastUpdated!.toSyncTime()}',
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontSize: AppDimensions.style12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.wb_sunny,
+                        weatherIcon,
                         size: AppDimensions.style60,
-                        color: Colors.yellow.shade300,
+                        color: AppColors.secondary,
                       ),
                       SizedBox(width: AppDimensions.width16),
                       Expanded(
@@ -89,9 +139,9 @@ class DashboardAppBar extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${city?.name ?? 'Unknown'}, ${city?.country ?? ''}',
+                              '${city?.name ?? context.loc.unknown}, ${city?.country ?? ''}',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: AppDimensions.style20,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -99,9 +149,9 @@ class DashboardAppBar extends StatelessWidget {
                             Text(
                               currentForecast?.weather?.firstOrNull?.description
                                       ?.toTitleCase() ??
-                                  'Unknown',
+                                  context.loc.unknown,
                               style: TextStyle(
-                                color: Colors.white70,
+                                color: AppColors.grey200,
                                 fontSize: AppDimensions.style16,
                               ),
                             ),
@@ -114,19 +164,19 @@ class DashboardAppBar extends StatelessWidget {
                           Text(
                             currentForecast?.main?.temp != null
                                 ? '${currentForecast!.main!.temp!.toStringAsFixed(1)}°C'
-                                : 'N/A',
+                                : context.loc.notAvailable,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: AppDimensions.style48,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             currentForecast?.main?.feelsLike != null
-                                ? 'Feels like ${currentForecast!.main!.feelsLike!.toStringAsFixed(1)}°C'
-                                : 'N/A',
+                                ? '${context.loc.feelsLike} ${currentForecast!.main!.feelsLike!.toStringAsFixed(1)}°C'
+                                : context.loc.notAvailable,
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: AppColors.grey200,
                               fontSize: AppDimensions.style12,
                             ),
                           ),
@@ -140,31 +190,31 @@ class DashboardAppBar extends StatelessWidget {
                     children: [
                       WeatherDetailWidget(
                         icon: Icons.water_drop,
-                        label: 'Humidity',
+                        label: context.loc.humidity,
                         value: currentForecast?.main?.humidity != null
                             ? '${currentForecast!.main!.humidity}%'
-                            : 'N/A',
+                            : context.loc.notAvailable,
                       ),
                       WeatherDetailWidget(
                         icon: Icons.air,
-                        label: 'Wind',
+                        label: context.loc.wind,
                         value: currentForecast?.wind?.speed != null
                             ? '${currentForecast!.wind!.speed} km/h'
-                            : 'N/A',
+                            : context.loc.notAvailable,
                       ),
                       WeatherDetailWidget(
                         icon: Icons.visibility,
-                        label: 'Visibility',
+                        label: context.loc.visibility,
                         value: currentForecast?.visibility != null
                             ? '${currentForecast!.visibility} km'
-                            : 'N/A',
+                            : context.loc.notAvailable,
                       ),
                       WeatherDetailWidget(
                         icon: Icons.compress,
-                        label: 'Pressure',
+                        label: context.loc.pressure,
                         value: currentForecast?.main?.pressure != null
                             ? '${currentForecast!.main!.pressure} hPa'
-                            : 'N/A',
+                            : context.loc.notAvailable,
                       ),
                     ],
                   ),

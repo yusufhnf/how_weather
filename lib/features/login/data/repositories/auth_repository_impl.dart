@@ -9,10 +9,14 @@ import '../mappers/user_mapper.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource remoteDataSource;
-  final UserMapper mapper;
+  final AuthRemoteDataSource _remoteDataSource;
+  final UserMapper _mapper;
 
-  AuthRepositoryImpl(this.remoteDataSource, this.mapper);
+  AuthRepositoryImpl({
+    required AuthRemoteDataSource remoteDataSource,
+    required UserMapper mapper,
+  }) : _remoteDataSource = remoteDataSource,
+       _mapper = mapper;
 
   @override
   Future<Either<AppException, UserEntity>> login({
@@ -20,11 +24,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final result = await remoteDataSource.login(
+      final result = await _remoteDataSource.login(
         email: email,
         password: password,
       );
-      return Right(mapper.toEntity(result));
+      return Right(_mapper.toEntity(result));
     } on ValidationException catch (e) {
       return Left(e);
     } on UnauthorizedException catch (e) {

@@ -18,12 +18,12 @@ class WeatherDetailWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white70, size: AppDimensions.style20),
+        Icon(icon, color: AppColors.grey200, size: AppDimensions.style20),
         SizedBox(height: AppDimensions.height5),
         Text(
           value,
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontSize: AppDimensions.style12,
             fontWeight: FontWeight.w600,
           ),
@@ -31,7 +31,7 @@ class WeatherDetailWidget extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white70,
+            color: AppColors.grey200,
             fontSize: AppDimensions.style10,
           ),
         ),

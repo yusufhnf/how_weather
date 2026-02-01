@@ -4,3 +4,4 @@ export 'internet_connection_service.dart';
 export 'location_service.dart';
 export 'logger_service.dart';
 export 'secure_storage_service.dart';
+export 'shared_preferences_service.dart';

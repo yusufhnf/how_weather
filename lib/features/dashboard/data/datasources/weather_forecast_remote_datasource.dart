@@ -15,11 +15,11 @@ abstract class WeatherForecastRemoteDataSource {
 @LazySingleton(as: WeatherForecastRemoteDataSource)
 class WeatherForecastRemoteDataSourceImpl
     implements WeatherForecastRemoteDataSource {
-  final HttpClientService httpClientService;
+  final HttpClientService _httpClientService;
 
   WeatherForecastRemoteDataSourceImpl({
-    @Named('openWeatherAPI') required this.httpClientService,
-  });
+    @Named('openWeatherAPI') required HttpClientService httpClientService,
+  }) : _httpClientService = httpClientService;
 
   @override
   Future<Either<AppException, WeatherForecastResponseModel>>
@@ -34,7 +34,7 @@ class WeatherForecastRemoteDataSourceImpl
         appid: apiKey,
       );
 
-      final response = await httpClientService.get(
+      final response = await _httpClientService.get(
         path: '/data/2.5/forecast',
         queryParameters: queryParams.toMap(),
       );

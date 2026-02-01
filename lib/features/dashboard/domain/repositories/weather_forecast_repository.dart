@@ -7,5 +7,7 @@ abstract class WeatherForecastRepository {
   Future<Either<AppException, WeatherForecastResponse>> getWeatherForecast({
     required double lat,
     required double lon,
+    forceGetFromRemote = false,
   });
+  Future<DateTime?> getLastUpdated();
 }

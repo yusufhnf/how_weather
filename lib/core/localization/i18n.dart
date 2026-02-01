@@ -40,6 +40,17 @@ abstract class I18n {
   String get unknownError;
   String loginSuccess(String name);
 
+  // Weather
+  String get lastUpdated;
+  String get feelsLike;
+  String get humidity;
+  String get wind;
+  String get visibility;
+  String get pressure;
+  String get unknown;
+  String get notAvailable;
+  String errorLoadingForecast(String message);
+
   // Validation Messages
   String get emailRequired;
   String get emailInvalid;
@@ -153,6 +164,34 @@ class I18nEn implements I18n {
 
   @override
   String loginSuccess(String name) => 'Login successful! Welcome $name';
+
+  @override
+  String get lastUpdated => 'Last updated:';
+
+  @override
+  String get feelsLike => 'Feels like';
+
+  @override
+  String get humidity => 'Humidity';
+
+  @override
+  String get wind => 'Wind';
+
+  @override
+  String get visibility => 'Visibility';
+
+  @override
+  String get pressure => 'Pressure';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get notAvailable => 'N/A';
+
+  @override
+  String errorLoadingForecast(String message) =>
+      'Error loading forecast: $message';
 
   @override
   String get emailRequired => 'Email is required';
@@ -300,6 +339,34 @@ class I18nId implements I18n {
 
   @override
   String loginSuccess(String name) => 'Login berhasil! Selamat datang $name';
+
+  @override
+  String get lastUpdated => 'Terakhir diperbarui:';
+
+  @override
+  String get feelsLike => 'Terasa seperti';
+
+  @override
+  String get humidity => 'Kelembaban';
+
+  @override
+  String get wind => 'Angin';
+
+  @override
+  String get visibility => 'Visibilitas';
+
+  @override
+  String get pressure => 'Tekanan';
+
+  @override
+  String get unknown => 'Tidak diketahui';
+
+  @override
+  String get notAvailable => 'N/A';
+
+  @override
+  String errorLoadingForecast(String message) =>
+      'Kesalahan memuat prakiraan: $message';
 
   @override
   String get emailRequired => 'Email wajib diisi';

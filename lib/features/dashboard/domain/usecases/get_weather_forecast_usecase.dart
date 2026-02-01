@@ -9,12 +9,18 @@ import '../repositories/weather_forecast_repository.dart';
 class GetWeatherForecastUseCase {
   final WeatherForecastRepository _repository;
 
-  GetWeatherForecastUseCase(this._repository);
+  GetWeatherForecastUseCase({required WeatherForecastRepository repository})
+    : _repository = repository;
 
   Future<Either<AppException, WeatherForecastResponse>> call({
     required double lat,
     required double lon,
+    bool forceGetFromRemote = false,
   }) {
-    return _repository.getWeatherForecast(lat: lat, lon: lon);
+    return _repository.getWeatherForecast(
+      lat: lat,
+      lon: lon,
+      forceGetFromRemote: forceGetFromRemote,
+    );
   }
 }

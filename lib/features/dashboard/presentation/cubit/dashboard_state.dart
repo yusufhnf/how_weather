@@ -11,6 +11,7 @@ class DashboardState with _$DashboardState {
     @Default(false) bool isCollapsed,
     required List<WeatherForecast> forecasts,
     City? city,
+    DateTime? lastUpdated,
   }) = _DashboardForecastLoaded;
   const factory DashboardState.forecastError({
     @Default(false) bool isCollapsed,

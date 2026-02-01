@@ -5,6 +5,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/core.dart';
 import '../../domain/entities/weather_forecast.dart';
+import '../../domain/repositories/weather_forecast_repository.dart';
 import '../../domain/usecases/get_weather_forecast_usecase.dart';
 
 part 'dashboard_state.dart';
@@ -13,14 +14,21 @@ part 'dashboard_cubit.freezed.dart';
 @injectable
 class DashboardCubit extends Cubit<DashboardState> {
   final GetWeatherForecastUseCase _getWeatherForecastUseCase;
+  final WeatherForecastRepository _repository;
   final LocationService _locationService;
 
-  DashboardCubit(this._getWeatherForecastUseCase, this._locationService)
-    : super(DashboardState.initial()) {
+  DashboardCubit({
+    required GetWeatherForecastUseCase getWeatherForecastUseCase,
+    required WeatherForecastRepository repository,
+    required LocationService locationService,
+  }) : _getWeatherForecastUseCase = getWeatherForecastUseCase,
+       _repository = repository,
+       _locationService = locationService,
+       super(const DashboardState.initial()) {
     _loadWeatherForecast();
   }
 
-  Future<void> _loadWeatherForecast() async {
+  Future<void> _loadWeatherForecast({bool forceGetFromRemote = false}) async {
     emit(DashboardState.forecastLoading(isCollapsed: state.isCollapsed));
 
     final locationResult = await _locationService.getCurrentLocation();
@@ -38,6 +46,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         final forecastResult = await _getWeatherForecastUseCase(
           lat: position.latitude,
           lon: position.longitude,
+          forceGetFromRemote: forceGetFromRemote,
         );
 
         forecastResult.fold(
@@ -49,11 +58,13 @@ class DashboardCubit extends Cubit<DashboardState> {
               ),
             );
           },
-          (response) {
+          (response) async {
+            final lastUpdated = await _repository.getLastUpdated();
             emit(
               DashboardState.forecastLoaded(
                 forecasts: response.list ?? [],
                 city: response.city,
+                lastUpdated: lastUpdated,
                 isCollapsed: state.isCollapsed,
               ),
             );
@@ -80,6 +91,6 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   void refreshForecast() {
-    _loadWeatherForecast();
+    _loadWeatherForecast(forceGetFromRemote: true);
   }
 }

@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker/talker.dart';
 
 @module
@@ -13,14 +14,15 @@ abstract class RegisterModule {
   @lazySingleton
   FlutterSecureStorage get secureStorage => const FlutterSecureStorage();
 
+  @preResolve
+  Future<SharedPreferences> get sharedPreferences =>
+      SharedPreferences.getInstance();
+
   @lazySingleton
   InternetConnection get internetConnection => InternetConnection();
 
   @preResolve
-  @lazySingleton
-  Future<HiveInterface> get hive async {
-    return Hive;
-  }
+  Future<Box<dynamic>> get hive async => Hive.box('howWeatherBox');
 
   @Named('openWeatherAPI')
   Dio dio() => Dio(

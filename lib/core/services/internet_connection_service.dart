@@ -7,7 +7,8 @@ import '../core.dart';
 class InternetConnectionService {
   final InternetConnection _internetConnection;
 
-  InternetConnectionService(this._internetConnection);
+  InternetConnectionService({required InternetConnection internetConnection})
+    : _internetConnection = internetConnection;
 
   Future<void> get hasConnection async {
     try {

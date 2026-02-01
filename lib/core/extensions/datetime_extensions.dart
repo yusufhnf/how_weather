@@ -60,4 +60,19 @@ extension DateTimeExtensions on DateTime {
       return 'Just now';
     }
   }
+
+  String toSyncTime() {
+    final now = DateTime.now();
+    final difference = now.difference(this);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '$day/$month $hour:${minute.toString().padLeft(2, '0')}';
+    }
+  }
 }
