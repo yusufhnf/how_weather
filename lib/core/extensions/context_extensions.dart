@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/localization.dart';
+
 extension ContextExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);
 
@@ -24,6 +26,9 @@ extension ContextExtensions on BuildContext {
   double get bottomPadding => viewPadding.bottom;
 
   bool get isKeyboardVisible => viewInsets.bottom > 0;
+
+  // Getter for access to localization in the context
+  I18n get loc => AppLocalizations.of(this);
 
   void unfocus() => FocusScope.of(this).unfocus();
 

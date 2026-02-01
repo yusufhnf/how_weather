@@ -1,8 +1,13 @@
-class AppException implements Exception {
+import 'package:equatable/equatable.dart';
+
+class AppException extends Equatable implements Exception {
   final String message;
   final String? code;
 
-  AppException(this.message, [this.code]);
+  const AppException(this.message, [this.code]);
+
+  @override
+  List<Object?> get props => [message, code];
 
   @override
   String toString() =>
@@ -10,36 +15,42 @@ class AppException implements Exception {
 }
 
 class NetworkException extends AppException {
-  NetworkException([String message = 'Network error occurred', String? code])
-    : super(message, code);
+  const NetworkException([
+    super.message = 'Network error occurred',
+    super.code,
+  ]);
 }
 
 class ServerException extends AppException {
-  ServerException([String message = 'Server error occurred', String? code])
-    : super(message, code);
+  const ServerException([super.message = 'Server error occurred', super.code]);
 }
 
 class CacheException extends AppException {
-  CacheException([String message = 'Cache error occurred', String? code])
-    : super(message, code);
+  const CacheException([super.message = 'Cache error occurred', super.code]);
 }
 
 class UnauthorizedException extends AppException {
-  UnauthorizedException([String message = 'Unauthorized access', String? code])
-    : super(message, code);
+  const UnauthorizedException([
+    super.message = 'Unauthorized access',
+    super.code,
+  ]);
 }
 
 class NotFoundException extends AppException {
-  NotFoundException([String message = 'Resource not found', String? code])
-    : super(message, code);
+  const NotFoundException([super.message = 'Resource not found', super.code]);
 }
 
 class ValidationException extends AppException {
-  ValidationException([String message = 'Validation failed', String? code])
-    : super(message, code);
+  const ValidationException([super.message = 'Validation failed', super.code]);
 }
 
 class TimeoutException extends AppException {
-  TimeoutException([String message = 'Request timeout', String? code])
-    : super(message, code);
+  const TimeoutException([super.message = 'Request timeout', super.code]);
+}
+
+class UnknownException extends AppException {
+  const UnknownException([
+    super.message = 'Unknown error occurred',
+    super.code,
+  ]);
 }

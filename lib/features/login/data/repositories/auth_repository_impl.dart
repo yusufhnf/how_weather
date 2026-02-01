@@ -1,0 +1,40 @@
+import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
+
+import '../../../../core/exceptions/app_exceptions.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../datasources/auth_remote_datasource.dart';
+import '../mappers/user_mapper.dart';
+
+@LazySingleton(as: AuthRepository)
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource remoteDataSource;
+  final UserMapper mapper;
+
+  AuthRepositoryImpl(this.remoteDataSource, this.mapper);
+
+  @override
+  Future<Either<AppException, UserEntity>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final result = await remoteDataSource.login(
+        email: email,
+        password: password,
+      );
+      return Right(mapper.toEntity(result));
+    } on ValidationException catch (e) {
+      return Left(e);
+    } on UnauthorizedException catch (e) {
+      return Left(e);
+    } on NetworkException catch (e) {
+      return Left(e);
+    } on ServerException catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(UnknownException(e.toString()));
+    }
+  }
+}

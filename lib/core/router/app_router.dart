@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/login/login.dart';
+
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -8,9 +10,8 @@ class AppRouter {
     routes: [
       GoRoute(
         path: '/',
-        name: 'home',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Home Page'))),
+        name: 'login',
+        builder: (context, state) => LoginScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

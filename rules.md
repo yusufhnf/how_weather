@@ -40,6 +40,7 @@ Shared functionality across features:
 * `ui/` - Themes, shared widgets, generated assets
 * `localization/` - i18n support
 * `exceptions/` - Custom exception handling
+* `validation/` - Reusable form validators
 
 ## Interaction Guidelines
 * **User Persona:** Assume the user is familiar with programming concepts but
@@ -79,8 +80,7 @@ lib/
       injector.dart       # GetIt configuration
       register_module.dart # Third-party dependencies
     exceptions/
-      app_exceptions.dart # Custom exceptions
-      failures.dart       # Failure classes for Either
+      app_exceptions.dart # Custom exceptions for Either pattern
     extensions/
       context_extensions.dart
       string_extensions.dart
@@ -106,6 +106,8 @@ lib/
         error_widget.dart
     utils/
       use_case.dart      # Base UseCase class
+    validation/
+      validators.dart    # Form validation utilities
   features/
     README.md            # Feature structure documentation
   main.dart
@@ -132,8 +134,7 @@ lib/
    - `app_router.dart` - GoRouter configuration
 
 5. **Exceptions & Failures** (`core/exceptions/`)
-   - `app_exceptions.dart` - Custom exceptions
-   - `failures.dart` - Failure classes for Either pattern
+   - `app_exceptions.dart` - Custom exceptions for error handling
 
 6. **Constants** (`core/constants/`)
    - `num_constants.dart` - Numeric constants
@@ -158,7 +159,10 @@ lib/
 11. **Utils** (`core/utils/`)
     - `use_case.dart` - Base UseCase class for domain layer
 
-12. **Main Entry** 
+12. **Validation** (`core/validation/`)
+    - `validators.dart` - Reusable form validators for email, password, etc.
+
+13. **Main Entry** 
     - `main.dart` - App initialization with AppCubit provider
 
 ### Initialization Steps
@@ -267,8 +271,9 @@ lib/
   for situations specific to your code. This project defines custom exceptions
   in `core/exceptions/app_exceptions.dart`.
 * **Error Handling with Dartz:** This project uses `dartz` for functional error
-  handling. Use `Either<Failure, Success>` pattern in repositories and use cases
-  to handle errors gracefully without throwing exceptions.
+  handling. Use `Either<AppException, Success>` pattern in repositories and use cases
+  to handle errors gracefully. All exceptions extend `AppException` which includes
+  Equatable for comparison and proper error messages.
 * **Arrow Functions:** Use arrow syntax for simple one-line functions.
 
 ## Flutter Best Practices
@@ -308,6 +313,47 @@ When building reusable APIs, such as a library, follow these principles.
 * **Feature-based Organization:** For larger projects, organize code by feature,
   where each feature has its own presentation, domain, and data subfolders. This
   improves navigability and scalability.
+
+## Extensions & Context Helpers
+* **ContextExtensions:** This project provides convenient extensions on `BuildContext`
+  in `core/extensions/context_extensions.dart` to simplify common operations:
+* **Theme Access:** Quick access to theme properties:
+  ```dart
+  context.theme        // ThemeData
+  context.textTheme    // TextTheme
+  context.colorScheme  // ColorScheme
+  ```
+* **Media Query:** Simplified screen size and padding access:
+  ```dart
+  context.screenWidth
+  context.screenHeight
+  context.topPadding
+  context.bottomPadding
+  context.isKeyboardVisible
+  ```
+* **Localization Access:** Direct access to localized strings via `context.i18n`:
+  ```dart
+  // Instead of: final i18n = AppLocalizations.of(context);
+  Text(context.i18n.welcomeBack)
+  Text(context.i18n.loginSuccess(user.name))
+  
+  // In validators
+  validator: (value) => Validators.email(value, context)
+  // Internally uses: context.i18n.emailRequired
+  ```
+* **Navigation Helpers:**
+  ```dart
+  context.push(NextScreen())
+  context.pop()
+  context.unfocus() // Dismiss keyboard
+  ```
+* **Snackbar Helper:**
+  ```dart
+  context.showSnackBar('Success message')
+  context.showSnackBar('Error', duration: Duration(seconds: 5))
+  ```
+* **Usage Pattern:** Always prefer `context.i18n` over `AppLocalizations.of(context)`
+  for cleaner, more readable code throughout the application.
 
 ## Lint Rules
 
@@ -421,10 +467,22 @@ linter:
 * **Use Cases:** Business logic is encapsulated in use case classes in the
   domain layer. Each use case represents a single business operation.
 * **Error Handling:** Use `dartz` Either type for error handling:
-  - Left side contains failures (custom exception objects)
+  - Left side contains exceptions (AppException and its subclasses)
   - Right side contains successful results
   ```dart
-  Future<Either<Failure, User>> getUser(String id);
+  Future<Either<AppException, User>> getUser(String id);
+  ```
+* **Exception Flow:** In repositories, catch thrown exceptions and return them
+  in Either's Left side. Don't convert to different exception types:
+  ```dart
+  try {
+    final result = await dataSource.getData();
+    return Right(result);
+  } on NetworkException catch (e) {
+    return Left(e); // Return the exception directly
+  } catch (e) {
+    return Left(UnknownException(e.toString()));
+  }
   ```
 
 ### Routing
@@ -529,16 +587,174 @@ linter:
 * **Error Handling:** Define custom exceptions in `core/exceptions/` for
   handling various HTTP error scenarios.
 
+### Form Validation
+* **Validators Class:** This project uses a centralized `Validators` class in
+  `core/validation/validators.dart` for all form validation logic.
+* **Reusability:** All validators are static methods that can be used across
+  different screens and features, promoting DRY (Don't Repeat Yourself) principle.
+* **Localized Messages:** All validators require `BuildContext` parameter to
+  access localized error messages from `AppLocalizations.of(context)`.
+* **Case 1 - Using Validators with Context:** Wrap validators in anonymous
+  functions to pass BuildContext:
+  ```dart
+  TextFormField(
+    controller: emailController,
+    decoration: InputDecoration(labelText: i18n.email),
+    validator: (value) => Validators.email(value, context),
+    autovalidateMode: AutovalidateMode.onUserInteraction,
+  )
+  
+  TextFormField(
+    controller: passwordController,
+    decoration: InputDecoration(labelText: i18n.password),
+    validator: (value) => Validators.password(value, context), // Uses default minLength of 8
+    obscureText: true,
+  )
+  ```
+* **Case 2 - Using Validators with Custom Parameters:** Pass both context and
+  custom parameters:
+  ```dart
+  TextFormField(
+    controller: passwordController,
+    decoration: InputDecoration(labelText: i18n.password),
+    validator: (value) => Validators.password(value, context, minLength: 12), // Custom minimum length
+    obscureText: true,
+  )
+  
+  TextFormField(
+    controller: nameController,
+    decoration: InputDecoration(labelText: i18n.name),
+    validator: (value) => Validators.minLength(value, 3, context, fieldName: 'Name'),
+  )
+  
+  TextFormField(
+    controller: confirmPasswordController,
+    decoration: InputDecoration(labelText: i18n.confirmPassword),
+    validator: (value) => Validators.match(value, passwordController.text, context, fieldName: 'Password'),
+  )
+  ```
+* **Available Validators:**
+  - `Validators.email(value, context)` - Email format validation
+  - `Validators.password(value, context, {minLength: 8})` - Password with minimum length
+  - `Validators.required(value, context, {fieldName: 'Field'})` - Required field check
+  - `Validators.minLength(value, min, context, {fieldName})` - Minimum character length
+  - `Validators.maxLength(value, max, context, {fieldName})` - Maximum character length
+  - `Validators.phoneNumber(value, context)` - Phone number format
+  - `Validators.url(value, context)` - URL format validation
+  - `Validators.match(value, compareValue, context, {fieldName})` - Match two fields
+  - `Validators.numeric(value, context, {fieldName})` - Numeric input only
+  - `Validators.alphabetic(value, context, {fieldName})` - Letters only
+  - `Validators.alphanumeric(value, context, {fieldName})` - Letters and numbers only
+* **Localized Error Messages:** All validators return error messages from I18n based
+  on current locale. Messages automatically switch between English and Indonesian.
+* **Validation Pattern:** Always use `autovalidateMode: AutovalidateMode.onUserInteraction`
+  for better UX, showing errors only after user starts typing.
+
 ### Localization
-* **Custom I18n:** This project uses a custom internationalization setup in
-  `core/localization/`.
-* **I18n Class:** Access translations through the `I18n` class with locale-specific
-  methods and properties.
-* **AppLocalizations:** Use the singleton `AppLocalizations.loc` to access
-  localized strings throughout the app.
-* **Delegate:** The `I18nDelegate` is registered in `MaterialApp` to provide
-  localization support.
-* **Supported Locales:** Define supported locales in `I18nDelegate.supportedLocals`.
+* **Multi-language Support:** This project uses a custom internationalization
+  setup in `core/localization/` with support for **English (en)** and 
+  **Indonesian (id)** languages.
+* **I18n Interface:** The `I18n` abstract class defines all localization strings
+  with implementations `I18nEn` (English) and `I18nId` (Indonesian).
+* **Accessing Translations:** Use `context.i18n` extension for cleaner access to
+  localized strings (recommended) or `AppLocalizations.of(context)`:
+  ```dart
+  // Recommended: Using context extension
+  Text(context.i18n.welcomeBack)
+  Text(context.i18n.loginSuccess(user.name))
+  
+  // Alternative: Direct AppLocalizations access
+  final i18n = AppLocalizations.of(context);
+  Text(i18n.welcomeBack)
+  ```
+* **Supported Locales:** Both `Locale('en', 'US')` and `Locale('id', 'ID')` are
+  supported in `I18nDelegate.supportedLocales`.
+* **String Types:** The I18n interface includes:
+  - Simple getters: `context.i18n.login`, `context.i18n.email`, `context.i18n.password`
+  - Methods with parameters: `context.i18n.loginSuccess(name)`, `context.i18n.passwordMinLength(8)`
+* **Delegate Registration:** Register `I18nDelegate` in `MaterialApp`:
+  ```dart
+  MaterialApp(
+    localizationsDelegates: [
+      const I18nDelegate(),
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: I18nDelegate.supportedLocales,
+  )
+  ```
+
+#### Localization Guidelines for Features
+* **Rule 1 - Never Use Hardcoded Strings in UI:** All user-facing strings (labels,
+  buttons, titles, messages) MUST be localized. Always use `context.i18n` extension
+  for cleaner access:
+  ```dart
+  // ❌ Bad - Hardcoded string
+  Text('Welcome Back')
+  ElevatedButton(child: Text('Login'))
+  
+  // ✅ Good - Localized string with context extension
+  Text(context.i18n.welcomeBack)
+  ElevatedButton(child: Text(context.i18n.login))
+  
+  // ✅ Also acceptable - Direct AppLocalizations access
+  final i18n = AppLocalizations.of(context);
+  Text(i18n.welcomeBack)
+  ```
+* **Rule 2 - Localize All Validation Messages:** Validators must accept `BuildContext`
+  to access localized error messages. Never return hardcoded error strings:
+  ```dart
+  // ❌ Bad - Hardcoded validation message
+  static String? email(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    return null;
+  }
+  
+  // ✅ Good - Localized validation message using context.i18n
+  static String? email(String? value, BuildContext context) {
+    if (value == null || value.isEmpty) {
+      return context.i18n.emailRequired;
+    }
+    return null;
+  }
+  
+  // Usage in TextFormField
+  TextFormField(
+    validator: (value) => Validators.email(value, context),
+  )
+  ```
+* **Adding New Strings:** When creating new features or screens:
+  1. Add new string getters/methods to the `I18n` abstract class
+  2. Implement in both `I18nEn` and `I18nId` classes
+  3. Use `context.i18n` to access in widgets for cleaner code
+  4. For validators, always pass `BuildContext` parameter
+* **Success/Error Messages:** All user feedback messages must be localized:
+  ```dart
+  // ✅ Success message with parameter using context.i18n
+  context.showSnackBar(context.i18n.loginSuccess(user.name))
+  
+  // ✅ Error messages
+  context.showSnackBar(context.i18n.networkError)
+  context.showSnackBar(context.i18n.serverError)
+  ```
+* **Dynamic Content:** For strings with dynamic values, use methods with parameters:
+  ```dart
+  // In I18n interface
+  String loginSuccess(String name);
+  String passwordMinLength(int length);
+  
+  // In I18nEn
+  String loginSuccess(String name) => 'Login successful! Welcome $name';
+  
+  // In I18nId
+  String loginSuccess(String name) => 'Login berhasil! Selamat datang $name';
+  
+  // Usage with context.i18n
+  Text(context.i18n.loginSuccess('John'))
+  ```
 
   ```dart
   import 'dart:developer' as developer;
@@ -621,68 +837,518 @@ linter:
 - Exclude generated files (e.g., `*.g.dart`, `*.freezed.dart`) from coverage reports.
 
 ## Testing
-* **Running Tests:** Use `flutter test` to run all tests.
-* **Unit Tests:** Use `package:flutter_test` for unit tests.
-* **Widget Tests:** Use `package:flutter_test` for widget tests.
-* **Bloc Testing:** Use `bloc_test` package for testing Cubits and Blocs with
-  simplified testing patterns.
+
+This project follows a comprehensive testing strategy with three types of tests: **Unit Tests**, **Widget Tests**, and **Integration Tests**. All tests are located in the `test/` directory, mirroring the structure of `lib/`.
+
+### Test Structure
+```
+test/
+  features/
+    login/
+      domain/
+        usecases/
+          login_usecase_test.dart
+      data/
+        mappers/
+          user_mapper_test.dart
+        repositories/
+          auth_repository_impl_test.dart
+      presentation/
+        cubit/
+          login_cubit_test.dart
+        pages/
+          login_screen_test.dart
+      integration/
+        login_integration_test.dart
+```
+
+### Running Tests
+* **All Tests:** `flutter test`
+* **Specific File:** `flutter test test/features/login/domain/usecases/login_usecase_test.dart`
+* **With Coverage:** `flutter test --coverage`
+* **View Coverage:** `genhtml coverage/lcov.info -o coverage/html && open coverage/html/index.html`
+
+### 1. Unit Tests
+
+Unit tests verify individual components in isolation. Mock all external dependencies to focus on the specific logic being tested.
+
+#### Domain Layer - Use Cases
+
+Test use cases to ensure they correctly handle business logic and error scenarios.
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:dartz/dartz.dart';
+
+class MockAuthRepository extends Mock implements AuthRepository {}
+
+void main() {
+  late LoginUseCase useCase;
+  late MockAuthRepository mockRepository;
+
+  setUp(() {
+    mockRepository = MockAuthRepository();
+    useCase = LoginUseCase(mockRepository);
+  });
+
+  group('LoginUseCase', () {
+    const email = 'test@example.com';
+    const password = 'password123';
+    const user = UserEntity(id: '1', email: email, name: 'Test', token: 'token');
+
+    test('should return UserEntity when login is successful', () async {
+      // Arrange
+      when(() => mockRepository.login(email, password))
+          .thenAnswer((_) async => const Right(user));
+
+      // Act
+      final result = await useCase(LoginParams(email: email, password: password));
+
+      // Assert
+      expect(result, const Right(user));
+      verify(() => mockRepository.login(email, password)).called(1);
+    });
+
+    test('should return ValidationException for invalid email', () async {
+      // Arrange
+      const invalidEmail = 'invalid-email';
+      when(() => mockRepository.login(invalidEmail, password))
+          .thenAnswer((_) async => const Left(ValidationException('Invalid email')));
+
+      // Act
+      final result = await useCase(LoginParams(email: invalidEmail, password: password));
+
+      // Assert
+      expect(result.isLeft(), true);
+      result.fold(
+        (exception) => expect(exception, isA<ValidationException>()),
+        (_) => fail('Should return ValidationException'),
+      );
+    });
+  });
+}
+```
+
+#### Data Layer - Mappers
+
+Test mappers to ensure correct conversion between models and entities.
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('UserMapper', () {
+    test('toEntity should convert UserModel to UserEntity', () {
+      // Arrange
+      const model = UserModel(
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        token: 'token123',
+      );
+
+      // Act
+      final entity = UserMapper.toEntity(model);
+
+      // Assert
+      expect(entity.id, model.id);
+      expect(entity.email, model.email);
+      expect(entity.name, model.name);
+      expect(entity.token, model.token);
+    });
+
+    test('toModel should convert UserEntity to UserModel', () {
+      // Arrange
+      const entity = UserEntity(
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        token: 'token123',
+      );
+
+      // Act
+      final model = UserMapper.toModel(entity);
+
+      // Assert
+      expect(model.id, entity.id);
+      expect(model.email, entity.email);
+      expect(model.name, entity.name);
+      expect(model.token, entity.token);
+    });
+  });
+}
+```
+
+#### Data Layer - Repositories
+
+Test repository implementations to ensure correct exception handling.
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:dartz/dartz.dart';
+
+class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
+
+void main() {
+  late AuthRepositoryImpl repository;
+  late MockAuthRemoteDataSource mockDataSource;
+
+  setUp(() {
+    mockDataSource = MockAuthRemoteDataSource();
+    repository = AuthRepositoryImpl(mockDataSource);
+  });
+
+  group('AuthRepositoryImpl', () {
+    const email = 'test@example.com';
+    const password = 'password123';
+    const userModel = UserModel(id: '1', email: email, name: 'Test', token: 'token');
+
+    test('should return UserEntity when remote call is successful', () async {
+      // Arrange
+      when(() => mockDataSource.login(email, password))
+          .thenAnswer((_) async => userModel);
+
+      // Act
+      final result = await repository.login(email, password);
+
+      // Assert
+      expect(result.isRight(), true);
+      result.fold(
+        (_) => fail('Should return UserEntity'),
+        (entity) {
+          expect(entity.id, userModel.id);
+          expect(entity.email, userModel.email);
+        },
+      );
+      verify(() => mockDataSource.login(email, password)).called(1);
+    });
+
+    test('should return NetworkException on network error', () async {
+      // Arrange
+      when(() => mockDataSource.login(email, password))
+          .thenThrow(const NetworkException('No internet'));
+
+      // Act
+      final result = await repository.login(email, password);
+
+      // Assert
+      expect(result.isLeft(), true);
+      result.fold(
+        (exception) => expect(exception, isA<NetworkException>()),
+        (_) => fail('Should return NetworkException'),
+      );
+    });
+  });
+}
+```
+
+### 2. Widget Tests
+
+Widget tests verify UI components and user interactions. Use BlocProvider for widgets that depend on Cubits.
+
+#### Testing Presentation - Cubits
+
+Use `bloc_test` package for testing state management logic.
+
+```dart
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:dartz/dartz.dart';
+
+class MockLoginUseCase extends Mock implements LoginUseCase {}
+
+void main() {
+  late LoginCubit cubit;
+  late MockLoginUseCase mockUseCase;
+
+  setUpAll(() {
+    registerFallbackValue(const LoginParams(email: '', password: ''));
+  });
+
+  setUp(() {
+    mockUseCase = MockLoginUseCase();
+    cubit = LoginCubit(mockUseCase);
+  });
+
+  tearDown(() {
+    cubit.close();
+  });
+
+  group('LoginCubit', () {
+    const email = 'test@example.com';
+    const password = 'password123';
+    const user = UserEntity(id: '1', email: email, name: 'Test', token: 'token');
+
+    blocTest<LoginCubit, LoginState>(
+      'emits [loading, success] when login succeeds',
+      build: () {
+        when(() => mockUseCase(any()))
+            .thenAnswer((_) async => const Right(user));
+        return cubit;
+      },
+      act: (cubit) => cubit.login(email, password),
+      expect: () => [
+        const LoginState.loading(),
+        const LoginState.success(user),
+      ],
+      verify: (_) {
+        verify(() => mockUseCase(any())).called(1);
+      },
+    );
+
+    blocTest<LoginCubit, LoginState>(
+      'emits [loading, failure] when validation fails',
+      build: () {
+        when(() => mockUseCase(any())).thenAnswer(
+          (_) async => const Left(ValidationException('Invalid email')),
+        );
+        return cubit;
+      },
+      act: (cubit) => cubit.login('invalid', password),
+      expect: () => [
+        const LoginState.loading(),
+        const LoginState.failure(ValidationException('Invalid email')),
+      ],
+    );
+  });
+}
+```
+
+#### Testing Presentation - Pages
+
+Test UI rendering, validation, and user interactions.
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockLoginCubit extends MockCubit<LoginState> implements LoginCubit {}
+class MockAppCubit extends Mock implements AppCubit {}
+
+void main() {
+  late MockLoginCubit mockLoginCubit;
+  late MockAppCubit mockAppCubit;
+
+  setUp(() {
+    mockLoginCubit = MockLoginCubit();
+    mockAppCubit = MockAppCubit();
+    when(() => mockLoginCubit.state).thenReturn(const LoginState.initial());
+    when(() => mockAppCubit.login(any())).thenAnswer((_) async {});
+  });
+
+  Widget createApp() {
+    return MaterialApp(
+      localizationsDelegates: const [I18nEn.delegate, I18nId.delegate],
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<LoginCubit>.value(value: mockLoginCubit),
+          BlocProvider<AppCubit>.value(value: mockAppCubit),
+        ],
+        child: const LoginScreen(),
+      ),
+    );
+  }
+
+  group('LoginScreen Widget Tests', () {
+    testWidgets('renders email and password fields', (tester) async {
+      await tester.pumpWidget(createApp());
+
+      expect(find.byType(TextFormField), findsNWidgets(2));
+      expect(find.byType(ElevatedButton), findsOneWidget);
+    });
+
+    testWidgets('shows validation error for invalid email', (tester) async {
+      await tester.pumpWidget(createApp());
+
+      final emailField = find.byType(TextFormField).first;
+      await tester.enterText(emailField, 'invalid-email');
+      await tester.pump();
+
+      expect(find.text('Please enter a valid email address'), findsOneWidget);
+    });
+
+    testWidgets('calls cubit.login when form is submitted', (tester) async {
+      await tester.pumpWidget(createApp());
+
+      await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
+      await tester.enterText(find.byType(TextFormField).last, 'password123');
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pump();
+
+      verify(() => mockLoginCubit.login('test@example.com', 'password123')).called(1);
+    });
+  });
+}
+```
+
+### 3. Integration Tests
+
+Integration tests verify complete user flows from UI to repository. They test multiple components working together.
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mocktail/mocktail.dart';
+
+void main() {
+  late MockAppCubit mockAppCubit;
+
+  setUpAll(() {
+    registerFallbackValue(const UserEntity(id: '', email: '', name: '', token: ''));
+  });
+
+  setUp(() {
+    mockAppCubit = MockAppCubit();
+    when(() => mockAppCubit.login(any())).thenAnswer((_) async {});
+  });
+
+  Widget createApp() {
+    return MaterialApp(
+      localizationsDelegates: const [I18nEn.delegate, I18nId.delegate],
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<AppCubit>.value(value: mockAppCubit),
+          BlocProvider<LoginCubit>(create: (_) => getIt<LoginCubit>()),
+        ],
+        child: const LoginScreen(),
+      ),
+    );
+  }
+
+  group('Login Integration Tests', () {
+    testWidgets('Complete login flow - success path', (tester) async {
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+
+      // Enter credentials
+      await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
+      await tester.enterText(find.byType(TextFormField).last, 'password123');
+      await tester.pumpAndSettle();
+
+      // Submit form
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pump();
+
+      // Verify loading state
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      await tester.pumpAndSettle();
+
+      // Verify success
+      expect(find.byType(SnackBar), findsOneWidget);
+      verify(() => mockAppCubit.login(any())).called(1);
+    });
+
+    testWidgets('Complete login flow - validation error', (tester) async {
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+
+      // Enter invalid email
+      await tester.enterText(find.byType(TextFormField).first, 'invalid-email');
+      await tester.enterText(find.byType(TextFormField).last, 'password123');
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Verify error message
+      expect(find.text('Please enter a valid email address'), findsOneWidget);
+      verifyNever(() => mockAppCubit.login(any()));
+    });
+  });
+}
+```
 
 ### Testing Best Practices
-* **Convention:** Follow the Arrange-Act-Assert (or Given-When-Then) pattern.
-* **Unit Tests:** Write unit tests for:
-  - Domain entities and use cases
-  - Data layer (repositories, data sources, mappers)
-  - Cubit/Bloc state management logic
-* **Widget Tests:** Write widget tests for UI components and screens.
-* **Mocking:** This project includes both `mockito` and `mocktail` for creating
-  test mocks:
-  - **Mocktail (Recommended):** Prefer `mocktail` for its simplicity and no code
-    generation requirement. It provides a clean, type-safe API for mocking.
-    ```dart
-    import 'package:mocktail/mocktail.dart';
-    
-    class MockRepository extends Mock implements UserRepository {}
-    
-    // In tests
-    final mockRepo = MockRepository();
-    when(() => mockRepo.getUser(any())).thenAnswer((_) async => Right(user));
-    ```
-  - **Mockito:** Use for complex scenarios requiring code generation or when
-    working with legacy code that already uses mockito.
-    ```dart
-    import 'package:mockito/annotations.dart';
-    
-    @GenerateMocks([UserRepository])
-    void main() {
-      // Tests using generated MockUserRepository
-    }
-    ```
-* **Mock Best Practices:**
-  - Mock external dependencies (repositories, data sources, services)
-  - Never mock entities or value objects from the domain layer
-  - Use fakes for simple implementations (e.g., in-memory storage)
-  - Register fallback values for complex types: `registerFallbackValue(MyClass())`
-  - Verify interactions when testing behavior: `verify(() => mock.method()).called(1)`
-* **Network Image Mocking:** Use `network_image_mock` for testing widgets with
-  network images.
-* **BlocTest Pattern:** When testing Cubits/Blocs, use the `blocTest` function:
+
+#### Mocking Strategy
+* **Mocktail (Recommended):** Prefer `mocktail` for its simplicity and no code generation requirement:
   ```dart
-  blocTest<MyCubit, MyState>(
-    'description',
-    build: () => MyCubit(mockRepository),
-    seed: () => InitialState(), // Optional: set initial state
-    act: (cubit) => cubit.doSomething(),
-    expect: () => [LoadingState(), SuccessState(data)],
-    verify: (_) => verify(() => mockRepository.getData()).called(1),
-  );
+  import 'package:mocktail/mocktail.dart';
+  
+  class MockRepository extends Mock implements UserRepository {}
+  
+  // In tests
+  final mockRepo = MockRepository();
+  when(() => mockRepo.getUser(any())).thenAnswer((_) async => Right(user));
   ```
-* **Code Coverage Target:** Maintain **>90% code coverage** across all layers:
-  - **Domain Layer:** 95%+ (entities, use cases, repository interfaces)
-  - **Data Layer:** 90%+ (repositories, data sources, mappers, models)
-  - **Presentation Layer:** 85%+ (Cubits, widgets, pages)
-  - Run coverage: `flutter test --coverage`
-  - View coverage: `genhtml coverage/lcov.info -o coverage/html`
-  - Exclude generated files (*.g.dart, *.freezed.dart) from coverage reports
+* **Mockito:** Use for complex scenarios requiring code generation or legacy code:
+  ```dart
+  import 'package:mockito/annotations.dart';
+  
+  @GenerateMocks([UserRepository])
+  void main() {
+    // Tests using generated MockUserRepository
+  }
+  ```
+
+#### Mock Best Practices
+* Mock external dependencies (repositories, data sources, services)
+* Never mock entities or value objects from domain layer
+* Use fakes for simple implementations (e.g., in-memory storage)
+* Register fallback values: `registerFallbackValue(MyClass())`
+* Verify interactions: `verify(() => mock.method()).called(1)`
+* Use `verifyNever()` to ensure methods weren't called in error scenarios
+
+#### Test Organization
+* **Arrange-Act-Assert Pattern:** Structure all tests with clear AAA sections
+* **Group Related Tests:** Use `group()` to organize related test cases
+* **setUp/tearDown:** Use for common setup and cleanup
+* **setUpAll/tearDownAll:** Use for expensive one-time setup
+
+#### Widget Test Helpers
+* **MaterialApp Wrapper:** Always wrap widgets with MaterialApp for proper context
+* **Localization Delegates:** Include i18n delegates when testing localized strings
+* **BlocProvider:** Use MultiBlocProvider for widgets depending on multiple cubits
+* **pumpAndSettle:** Wait for all animations and async operations
+* **pump:** Trigger a single frame rebuild
+
+### Code Coverage
+
+#### Coverage Target
+Maintain **>90% code coverage** across all layers:
+* **Domain Layer:** 95%+ (entities, use cases, repository interfaces)
+* **Data Layer:** 90%+ (repositories, data sources, mappers, models)
+* **Presentation Layer:** 85%+ (Cubits, widgets, pages)
+
+#### Running Coverage
+```bash
+# Generate coverage
+flutter test --coverage
+
+# View HTML report (macOS/Linux)
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+
+# View HTML report (Windows)
+perl C:\ProgramData\chocolatey\lib\lcov\tools\bin\genhtml coverage/lcov.info -o coverage/html
+start coverage/html/index.html
+```
+
+#### Excluding Generated Files
+Add to `test/` directory or update `analysis_options.yaml`:
+```yaml
+analyzer:
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+    - '**/injector.config.dart'
+```
+
+### Example Test Reference
+
+For complete examples of unit, widget, and integration tests, see the login feature tests:
+* **Use Case:** [test/features/login/domain/usecases/login_usecase_test.dart](test/features/login/domain/usecases/login_usecase_test.dart)
+* **Mapper:** [test/features/login/data/mappers/user_mapper_test.dart](test/features/login/data/mappers/user_mapper_test.dart)
+* **Repository:** [test/features/login/data/repositories/auth_repository_impl_test.dart](test/features/login/data/repositories/auth_repository_impl_test.dart)
+* **Cubit:** [test/features/login/presentation/cubit/login_cubit_test.dart](test/features/login/presentation/cubit/login_cubit_test.dart)
+* **Page:** [test/features/login/presentation/pages/login_screen_test.dart](test/features/login/presentation/pages/login_screen_test.dart)
+* **Integration:** [test/features/login/integration/login_integration_test.dart](test/features/login/integration/login_integration_test.dart)
 
 ## Utilities & Extensions
 * **Extensions Organization:** Define extension methods in `core/extensions/`
