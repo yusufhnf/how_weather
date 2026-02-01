@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/core.dart';
 import '../cubit/login_cubit.dart';
@@ -64,7 +65,7 @@ class _LoginScreenContentState extends State<_LoginScreenContent> {
                 userId: user.id,
               );
               context.showSnackBar(context.loc.loginSuccess(user.name));
-              // TODO: Navigate to the next screen after login
+              context.replace(AppRouter.dashboardRoute);
             },
             failure: (message) {
               context.showSnackBar(message);
