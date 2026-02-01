@@ -13,8 +13,8 @@ import 'core/ui/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Hive.initFlutter();
+  await Hive.openBox('howWeatherBox');
   await configureDependencies();
 
   runApp(MyApp());

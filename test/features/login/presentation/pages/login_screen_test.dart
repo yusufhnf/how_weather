@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:how_weather/core/core.dart';
 import 'package:how_weather/features/login/domain/entities/user_entity.dart';
 import 'package:how_weather/features/login/presentation/cubit/login_cubit.dart';
@@ -69,15 +70,22 @@ void main() {
   });
 
   Widget createWidgetUnderTest(WidgetTester tester) {
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (context, state) => const LoginScreen()),
+      ],
+    );
+
     return ScreenUtilInit(
       designSize: const Size(360, 690),
       builder: (context, child) => BlocProvider<AppCubit>.value(
         value: mockAppCubit,
-        child: MaterialApp(
+        child: MaterialApp.router(
           locale: const Locale('en', 'US'),
           localizationsDelegates: [const I18nDelegate()],
           supportedLocales: I18nDelegate.supportedLocales,
-          home: const LoginScreen(),
+          routerConfig: router,
         ),
       ),
     );

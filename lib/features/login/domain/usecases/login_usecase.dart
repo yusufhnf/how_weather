@@ -8,13 +8,13 @@ import '../repositories/auth_repository.dart';
 
 @injectable
 class LoginUseCase implements UseCase<UserEntity, LoginParams> {
-  final AuthRepository repository;
+  final AuthRepository _repository;
 
-  LoginUseCase(this.repository);
+  LoginUseCase({required AuthRepository repository}) : _repository = repository;
 
   @override
   Future<Either<AppException, UserEntity>> call(LoginParams params) async {
-    return await repository.login(
+    return await _repository.login(
       email: params.email,
       password: params.password,
     );

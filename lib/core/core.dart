@@ -1,6 +1,7 @@
 export 'constants/constants.dart';
 export 'cubit/cubit.dart';
 export 'di/di.dart';
+export 'env/env.dart';
 export 'exceptions/exceptions.dart';
 export 'extensions/extensions.dart';
 export 'localization/localization.dart';

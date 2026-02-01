@@ -14,7 +14,7 @@ void main() {
 
   setUp(() {
     mockRepository = MockAuthRepository();
-    useCase = LoginUseCase(mockRepository);
+    useCase = LoginUseCase(repository: mockRepository);
   });
 
   const tEmail = 'test@example.com';

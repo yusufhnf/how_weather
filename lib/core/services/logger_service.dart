@@ -5,7 +5,7 @@ import 'package:talker/talker.dart';
 class LoggerService {
   final Talker _talker;
 
-  LoggerService(this._talker);
+  LoggerService({required Talker talker}) : _talker = talker;
 
   Talker get talker => _talker;
 

@@ -26,7 +26,10 @@ void main() {
   setUp(() {
     mockDataSource = MockAuthRemoteDataSource();
     mockMapper = MockUserMapper();
-    repository = AuthRepositoryImpl(mockDataSource, mockMapper);
+    repository = AuthRepositoryImpl(
+      remoteDataSource: mockDataSource,
+      mapper: mockMapper,
+    );
   });
 
   const tEmail = 'test@example.com';

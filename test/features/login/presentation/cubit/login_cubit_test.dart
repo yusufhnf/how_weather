@@ -19,7 +19,7 @@ void main() {
 
   setUp(() {
     mockLoginUseCase = MockLoginUseCase();
-    cubit = LoginCubit(mockLoginUseCase);
+    cubit = LoginCubit(loginUseCase: mockLoginUseCase);
   });
 
   tearDown(() {

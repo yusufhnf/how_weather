@@ -20,14 +20,13 @@ class AppCubit extends Cubit<AppState> {
     : super(const AppState());
 
   Future<void> init() async {
-    await _hiveService.init('app_box');
     await _loadTheme();
     await _loadLocale();
     await _loadAuthState();
   }
 
   Future<void> _loadTheme() async {
-    final themeModeIndex = _hiveService.get<int>(_themeKey);
+    final themeModeIndex = await _hiveService.getTyped<int>(key: _themeKey);
     if (themeModeIndex != null) {
       final themeMode = ThemeMode.values[themeModeIndex];
       emit(state.copyWith(themeMode: themeMode));
@@ -35,7 +34,7 @@ class AppCubit extends Cubit<AppState> {
   }
 
   Future<void> _loadLocale() async {
-    final localeString = _hiveService.get<String>(_localeKey);
+    final localeString = await _hiveService.getTyped<String>(key: _localeKey);
     if (localeString != null) {
       final parts = localeString.split('_');
       if (parts.length == 2) {
@@ -58,14 +57,14 @@ class AppCubit extends Cubit<AppState> {
 
   Future<void> changeTheme(ThemeMode themeMode) async {
     emit(state.copyWith(themeMode: themeMode));
-    await _hiveService.put(_themeKey, themeMode.index);
+    await _hiveService.put(key: _themeKey, value: themeMode.index);
   }
 
   Future<void> changeLocale(Locale locale) async {
     emit(state.copyWith(locale: locale));
     await _hiveService.put(
-      _localeKey,
-      '${locale.languageCode}_${locale.countryCode}',
+      key: _localeKey,
+      value: '${locale.languageCode}_${locale.countryCode}',
     );
   }
 

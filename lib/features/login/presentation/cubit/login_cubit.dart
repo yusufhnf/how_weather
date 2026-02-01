@@ -10,14 +10,16 @@ part 'login_cubit.freezed.dart';
 
 @injectable
 class LoginCubit extends Cubit<LoginState> {
-  final LoginUseCase loginUseCase;
+  final LoginUseCase _loginUseCase;
 
-  LoginCubit(this.loginUseCase) : super(const LoginState.initial());
+  LoginCubit({required LoginUseCase loginUseCase})
+    : _loginUseCase = loginUseCase,
+      super(const LoginState.initial());
 
   Future<void> login({required String email, required String password}) async {
     emit(const LoginState.loading());
 
-    final result = await loginUseCase(
+    final result = await _loginUseCase(
       LoginParams(email: email, password: password),
     );
 

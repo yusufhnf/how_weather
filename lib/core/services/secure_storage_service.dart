@@ -5,7 +5,8 @@ import 'package:injectable/injectable.dart';
 class SecureStorageService {
   final FlutterSecureStorage _storage;
 
-  SecureStorageService(this._storage);
+  SecureStorageService({required FlutterSecureStorage storage})
+    : _storage = storage;
 
   Future<void> write({required String key, required String value}) async {
     await _storage.write(key: key, value: value);

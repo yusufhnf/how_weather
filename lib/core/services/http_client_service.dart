@@ -1,103 +1,210 @@
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
-@lazySingleton
-class HttpClientService {
-  final Dio _dio;
+import '../core.dart';
 
-  HttpClientService(this._dio);
-
-  Dio get client => _dio;
-
-  Future<Response<T>> get<T>(
-    String path, {
+abstract class HttpClientService {
+  Future<Response> get({
+    required String path,
     Map<String, dynamic>? queryParameters,
     Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onReceiveProgress,
-  }) async {
-    return _dio.get<T>(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
-      onReceiveProgress: onReceiveProgress,
+  });
+  Future<Response> fetch({required RequestOptions requestOptions});
+  Future<Response> post({
+    required String path,
+    required dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  });
+  Future<Response> put({
+    required String path,
+    required dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  });
+  Future<Response> patch({
+    required String path,
+    required dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  });
+  Future<Response> delete({
+    required String path,
+    required dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  });
+}
+
+@Named('openWeatherAPI')
+@LazySingleton(as: HttpClientService)
+class HttpClientServiceImpl implements HttpClientService {
+  final Dio dio;
+  final InternetConnectionService internetConnectionService;
+  final LoggerService loggerService;
+
+  HttpClientServiceImpl({
+    @Named('openWeatherAPI') required this.dio,
+    required this.internetConnectionService,
+    required this.loggerService,
+  }) : super() {
+    dio.interceptors.add(
+      PrettyDioLogger(
+        requestBody: true,
+        responseBody: true,
+        responseHeader: true,
+      ),
     );
   }
 
-  Future<Response<T>> post<T>(
-    String path, {
-    dynamic data,
+  @override
+  Future<Response> delete({
+    required String path,
+    required data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
   }) async {
-    return _dio.post<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
-      onSendProgress: onSendProgress,
-      onReceiveProgress: onReceiveProgress,
-    );
+    try {
+      await internetConnectionService.hasConnection;
+
+      final response = await dio.delete<String>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      return response;
+    } on ConnectionException catch (e, trace) {
+      loggerService.error('Connection error', e, trace);
+      rethrow;
+    } on DioException catch (e, trace) {
+      loggerService.error('HTTP error', e, trace);
+      rethrow;
+    }
   }
 
-  Future<Response<T>> put<T>(
-    String path, {
-    dynamic data,
+  @override
+  Future<Response> get({
+    required String path,
     Map<String, dynamic>? queryParameters,
     Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
   }) async {
-    return _dio.put<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
-      onSendProgress: onSendProgress,
-      onReceiveProgress: onReceiveProgress,
-    );
+    try {
+      await internetConnectionService.hasConnection;
+
+      final response = await dio.get<String>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      return response;
+    } on ConnectionException catch (e, trace) {
+      loggerService.error('Connection error', e, trace);
+      rethrow;
+    } on DioException catch (e, trace) {
+      loggerService.error('HTTP error', e, trace);
+      rethrow;
+    }
   }
 
-  Future<Response<T>> delete<T>(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
-    return _dio.delete<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
-    );
+  @override
+  Future<Response> fetch({required RequestOptions requestOptions}) async {
+    try {
+      await internetConnectionService.hasConnection;
+
+      final response = await dio.fetch(requestOptions);
+
+      return response;
+    } on ConnectionException catch (e, trace) {
+      loggerService.error('Connection error', e, trace);
+      rethrow;
+    } on DioException catch (e, trace) {
+      loggerService.error('HTTP error', e, trace);
+      rethrow;
+    }
   }
 
-  Future<Response<T>> patch<T>(
-    String path, {
-    dynamic data,
+  @override
+  Future<Response> patch({
+    required String path,
+    required data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
   }) async {
-    return _dio.patch<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
-      onSendProgress: onSendProgress,
-      onReceiveProgress: onReceiveProgress,
-    );
+    try {
+      await internetConnectionService.hasConnection;
+
+      final response = await dio.patch<String>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      return response;
+    } on ConnectionException catch (e, trace) {
+      loggerService.error('Connection error', e, trace);
+      rethrow;
+    } on DioException catch (e, trace) {
+      loggerService.error('HTTP error', e, trace);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Response> post({
+    required String path,
+    required data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      await internetConnectionService.hasConnection;
+
+      final response = await dio.post<String>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      return response;
+    } on ConnectionException catch (e, trace) {
+      loggerService.error('Connection error', e, trace);
+      rethrow;
+    } on DioException catch (e, trace) {
+      loggerService.error('HTTP error', e, trace);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Response> put({
+    required String path,
+    required data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      await internetConnectionService.hasConnection;
+
+      final response = await dio.put<String>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      return response;
+    } on ConnectionException catch (e, trace) {
+      loggerService.error('Connection error', e, trace);
+      rethrow;
+    } on DioException catch (e, trace) {
+      loggerService.error('HTTP error', e, trace);
+      rethrow;
+    }
   }
 }
