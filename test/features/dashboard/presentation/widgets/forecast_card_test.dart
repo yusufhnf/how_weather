@@ -7,7 +7,7 @@ import 'package:how_weather/features/dashboard/presentation/widgets/forecast_car
 
 void main() {
   const tForecast = WeatherForecast(
-    dt: 1640995200, // January 1, 2022, 12:00:00 UTC
+    dt: 1640995200,
     main: MainData(temp: 25.5),
     weather: [WeatherData(id: 800, main: 'Clear', description: 'clear sky')],
   );
@@ -26,11 +26,9 @@ void main() {
 
   group('ForecastCard Widget Tests', () {
     testWidgets('should display forecast time correctly', (tester) async {
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(Card), findsOneWidget);
       expect(find.text('07:00'), findsOneWidget);
     });
@@ -38,32 +36,26 @@ void main() {
     testWidgets('should display temperature with correct formatting', (
       tester,
     ) async {
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.text('25.5°C'), findsOneWidget);
     });
 
     testWidgets('should display weather description', (tester) async {
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.text('Clear Sky'), findsOneWidget);
     });
 
     testWidgets('should display card with proper styling', (tester) async {
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(Card), findsOneWidget);
-      expect(find.byType(Padding), findsWidgets); // Card content padding
-      expect(find.byType(Column), findsOneWidget); // Main content column
+      expect(find.byType(Padding), findsWidgets);
+      expect(find.byType(Column), findsOneWidget);
     });
 
     testWidgets('should handle null dt gracefully', (tester) async {
@@ -89,12 +81,10 @@ void main() {
       );
       await tester.pump();
 
-      // Assert - should not crash and display current time
       expect(find.byType(Card), findsOneWidget);
     });
 
     testWidgets('should handle null temperature gracefully', (tester) async {
-      // Arrange
       const forecastWithNullTemp = WeatherForecast(
         dt: 1640995200,
         main: MainData(temp: null),
@@ -116,12 +106,10 @@ void main() {
       );
       await tester.pump();
 
-      // Assert - should display localized "not available" text
       expect(find.byType(Card), findsOneWidget);
     });
 
     testWidgets('should handle empty weather list gracefully', (tester) async {
-      // Arrange
       const forecastWithEmptyWeather = WeatherForecast(
         dt: 1640995200,
         main: MainData(temp: 25.5),
@@ -143,14 +131,12 @@ void main() {
       );
       await tester.pump();
 
-      // Assert - should display localized "unknown" text
       expect(find.byType(Card), findsOneWidget);
     });
 
     testWidgets('should handle null weather description gracefully', (
       tester,
     ) async {
-      // Arrange
       const forecastWithNullDescription = WeatherForecast(
         dt: 1640995200,
         main: MainData(temp: 25.5),
@@ -172,7 +158,6 @@ void main() {
       );
       await tester.pump();
 
-      // Assert - should display localized "unknown" text
       expect(find.byType(Card), findsOneWidget);
     });
   });

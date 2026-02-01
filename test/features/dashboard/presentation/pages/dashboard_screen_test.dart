@@ -14,6 +14,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../helpers/test_helpers.dart';
+
 class MockDashboardCubit extends Mock implements DashboardCubit {}
 
 class MockAppCubit extends Mock implements AppCubit {}
@@ -31,13 +33,7 @@ void main() {
   late StreamController<AppState> appStateController;
 
   setUp(() {
-    // Set up larger test window size to prevent layout overflow
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.platformDispatcher.views.first.physicalSize = const Size(
-      1080,
-      1920,
-    );
-    binding.platformDispatcher.views.first.devicePixelRatio = 1.0;
+    TestWindowConfig.setupWindowSize();
 
     mockDashboardCubit = MockDashboardCubit();
     mockAppCubit = MockAppCubit();
@@ -75,10 +71,7 @@ void main() {
     dashboardStateController.close();
     appStateController.close();
     getIt.reset();
-    // Reset window size
-    final binding = TestWidgetsFlutterBinding.instance;
-    binding.platformDispatcher.views.first.resetPhysicalSize();
-    binding.platformDispatcher.views.first.resetDevicePixelRatio();
+    TestWindowConfig.resetWindowSize();
   });
 
   Widget createWidgetUnderTestWithLargeHeight() {

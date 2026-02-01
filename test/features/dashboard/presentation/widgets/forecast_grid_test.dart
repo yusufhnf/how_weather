@@ -13,6 +13,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../helpers/test_helpers.dart';
+
 class MockDashboardCubit extends Mock implements DashboardCubit {}
 
 final getIt = GetIt.instance;
@@ -22,13 +24,7 @@ void main() {
   late StreamController<DashboardState> dashboardStateController;
 
   setUp(() {
-    // Set up larger test window size to prevent layout overflow
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.platformDispatcher.views.first.physicalSize = const Size(
-      1080,
-      1920,
-    );
-    binding.platformDispatcher.views.first.devicePixelRatio = 1.0;
+    TestWindowConfig.setupWindowSize();
 
     mockDashboardCubit = MockDashboardCubit();
     dashboardStateController = StreamController<DashboardState>.broadcast();
@@ -48,10 +44,7 @@ void main() {
   tearDown(() {
     dashboardStateController.close();
     getIt.reset();
-    // Reset window size
-    final binding = TestWidgetsFlutterBinding.instance;
-    binding.platformDispatcher.views.first.resetPhysicalSize();
-    binding.platformDispatcher.views.first.resetDevicePixelRatio();
+    TestWindowConfig.resetWindowSize();
   });
 
   Widget createWidgetUnderTest() {
@@ -59,7 +52,7 @@ void main() {
       designSize: const Size(
         1080,
         1920,
-      ), // Larger screen size to prevent layout overflow
+      ),
       builder: (context, child) => MaterialApp(
         locale: const Locale('en', 'US'),
         localizationsDelegates: const [I18nDelegate()],
@@ -78,24 +71,20 @@ void main() {
     testWidgets('should display loading grid when state is forecastLoading', (
       tester,
     ) async {
-      // Arrange
       when(
         () => mockDashboardCubit.state,
       ).thenReturn(const DashboardState.forecastLoading());
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(SliverGrid), findsOneWidget);
-      expect(find.byType(Shimmer), findsNWidgets(6)); // 6 shimmer placeholders
+      expect(find.byType(Shimmer), findsNWidgets(6));
     });
 
     testWidgets('should display loaded grid when state is forecastLoaded', (
       tester,
     ) async {
-      // Arrange
       final tForecasts = List.generate(
         6,
         (index) => WeatherForecast(
@@ -115,21 +104,18 @@ void main() {
         ),
       );
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(ReorderableGridView), findsOneWidget);
-      expect(find.byType(Card), findsNWidgets(6)); // 6 forecast cards
+      expect(find.byType(Card), findsNWidgets(6));
     });
 
     testWidgets(
       'should limit display to 20 forecasts when more than 20 available',
       (tester) async {
-        // Arrange
         final tForecasts = List.generate(
-          25, // More than 20
+          25,
           (index) => WeatherForecast(
             dt: 1640995200 + (index * 3600),
             main: MainData(temp: 20.0 + index),
@@ -151,20 +137,17 @@ void main() {
           ),
         );
 
-        // Act
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pump();
 
-        // Assert
         expect(find.byType(ReorderableGridView), findsOneWidget);
-        expect(find.byType(Card), findsNWidgets(20)); // Limited to 20 cards
+        expect(find.byType(Card), findsNWidgets(20));
       },
     );
 
     testWidgets('should display error view when state is forecastError', (
       tester,
     ) async {
-      // Arrange
       const tException = AppException(
         code: 'NETWORK_ERROR',
         message: 'Network error',
@@ -173,11 +156,9 @@ void main() {
         () => mockDashboardCubit.state,
       ).thenReturn(const DashboardState.forecastError(message: tException));
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(SliverToBoxAdapter), findsOneWidget);
       expect(
         find.text('Error loading forecast: Network error'),
@@ -190,7 +171,6 @@ void main() {
     testWidgets('should call refreshForecast when retry button is tapped', (
       tester,
     ) async {
-      // Arrange
       const tException = AppException(
         code: 'NETWORK_ERROR',
         message: 'Network error',
@@ -199,13 +179,11 @@ void main() {
         () => mockDashboardCubit.state,
       ).thenReturn(const DashboardState.forecastError(message: tException));
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
       await tester.tap(find.text('Retry'));
       await tester.pump();
 
-      // Assert
       verify(() => mockDashboardCubit.refreshForecast()).called(1);
     });
 
@@ -235,17 +213,12 @@ void main() {
         () => mockDashboardCubit.reorderForecasts(any(), any()),
       ).thenAnswer((_) async {});
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Find the ReorderableGridView and simulate reordering
       final reorderableGrid = find.byType(ReorderableGridView);
       expect(reorderableGrid, findsOneWidget);
 
-      // Note: Testing actual drag-and-drop is complex in widget tests
-      // We verify the onReorder callback is properly set up by checking
-      // that the widget exists and the callback can be called
       final reorderableGridWidget = tester.widget<ReorderableGridView>(
         reorderableGrid,
       );
@@ -255,18 +228,15 @@ void main() {
     testWidgets('should display loading grid for initial state', (
       tester,
     ) async {
-      // Arrange
       when(
         () => mockDashboardCubit.state,
       ).thenReturn(const DashboardState.initial());
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(SliverGrid), findsOneWidget);
-      expect(find.byType(Shimmer), findsNWidgets(6)); // 6 shimmer placeholders
+      expect(find.byType(Shimmer), findsNWidgets(6));
     });
 
     testWidgets('should have proper grid layout with 2 columns', (
@@ -291,11 +261,9 @@ void main() {
         ),
       );
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       final reorderableGrid = find.byType(ReorderableGridView);
       expect(reorderableGrid, findsOneWidget);
 
@@ -311,7 +279,6 @@ void main() {
     });
 
     testWidgets('should handle empty forecasts list', (tester) async {
-      // Arrange
       when(() => mockDashboardCubit.state).thenReturn(
         DashboardState.forecastLoaded(
           forecasts: [],
@@ -320,13 +287,11 @@ void main() {
         ),
       );
 
-      // Act
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      // Assert
       expect(find.byType(ReorderableGridView), findsOneWidget);
-      expect(find.byType(Card), findsNothing); // No cards for empty list
+      expect(find.byType(Card), findsNothing);
     });
   });
 }
