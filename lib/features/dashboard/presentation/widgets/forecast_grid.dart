@@ -71,8 +71,13 @@ class ForecastGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadedGrid(BuildContext context, List<WeatherForecast> forecasts) {
-    final displayForecasts = forecasts.length > 20 ? forecasts.sublist(0, 20) : forecasts;
+  Widget _buildLoadedGrid(
+    BuildContext context,
+    List<WeatherForecast> forecasts,
+  ) {
+    final displayForecasts = forecasts.length > 20
+        ? forecasts.sublist(0, 20)
+        : forecasts;
 
     return SliverToBoxAdapter(
       child: Padding(
@@ -85,10 +90,7 @@ class ForecastGrid extends StatelessWidget {
           crossAxisSpacing: AppDimensions.width16,
           childAspectRatio: 3 / 2,
           children: displayForecasts.map((forecast) {
-            return ForecastCard(
-              key: ValueKey(forecast.dt),
-              forecast: forecast,
-            );
+            return ForecastCard(key: ValueKey(forecast.dt), forecast: forecast);
           }).toList(),
           onReorder: (oldIndex, newIndex) {
             context.read<DashboardCubit>().reorderForecasts(oldIndex, newIndex);

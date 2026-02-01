@@ -91,35 +91,45 @@ class WeatherForecastLocalDataSourceImpl
     final forecastsJson = forecasts.map((forecast) {
       return WeatherForecastModel(
         dt: forecast.dt,
-        main: forecast.main != null ? MainDataModel(
-          temp: forecast.main!.temp,
-          feelsLike: forecast.main!.feelsLike,
-          tempMin: forecast.main!.tempMin,
-          tempMax: forecast.main!.tempMax,
-          pressure: forecast.main!.pressure,
-          seaLevel: forecast.main!.seaLevel,
-          grndLevel: forecast.main!.grndLevel,
-          humidity: forecast.main!.humidity,
-          tempKf: forecast.main!.tempKf,
-        ) : null,
-        weather: forecast.weather?.map((w) => WeatherDataModel(
-          id: w.id,
-          main: w.main,
-          description: w.description,
-          icon: w.icon,
-        )).toList(),
-        clouds: forecast.clouds != null ? CloudsModel(all: forecast.clouds!.all) : null,
-        wind: forecast.wind != null ? WindModel(
-          speed: forecast.wind!.speed,
-          deg: forecast.wind!.deg,
-          gust: forecast.wind!.gust,
-        ) : null,
+        main: forecast.main != null
+            ? MainDataModel(
+                temp: forecast.main!.temp,
+                feelsLike: forecast.main!.feelsLike,
+                tempMin: forecast.main!.tempMin,
+                tempMax: forecast.main!.tempMax,
+                pressure: forecast.main!.pressure,
+                seaLevel: forecast.main!.seaLevel,
+                grndLevel: forecast.main!.grndLevel,
+                humidity: forecast.main!.humidity,
+                tempKf: forecast.main!.tempKf,
+              )
+            : null,
+        weather: forecast.weather
+            ?.map(
+              (w) => WeatherDataModel(
+                id: w.id,
+                main: w.main,
+                description: w.description,
+                icon: w.icon,
+              ),
+            )
+            .toList(),
+        clouds: forecast.clouds != null
+            ? CloudsModel(all: forecast.clouds!.all)
+            : null,
+        wind: forecast.wind != null
+            ? WindModel(
+                speed: forecast.wind!.speed,
+                deg: forecast.wind!.deg,
+                gust: forecast.wind!.gust,
+              )
+            : null,
         visibility: forecast.visibility,
         pop: forecast.pop,
-        rain: forecast.rain != null ? RainModel(threeHour: forecast.rain!.threeHour) : null,
-        sys: forecast.sys != null ? SysModel(
-          pod: forecast.sys!.pod,
-        ) : null,
+        rain: forecast.rain != null
+            ? RainModel(threeHour: forecast.rain!.threeHour)
+            : null,
+        sys: forecast.sys != null ? SysModel(pod: forecast.sys!.pod) : null,
         dtTxt: forecast.dtTxt,
       ).toJson();
     }).toList();
