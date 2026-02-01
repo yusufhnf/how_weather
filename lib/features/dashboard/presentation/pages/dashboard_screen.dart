@@ -4,8 +4,7 @@ import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 
 import '../../../../core/core.dart';
 import '../cubit/dashboard_cubit.dart';
-import '../widgets/dashboard_app_bar.dart';
-import '../widgets/forecast_grid.dart';
+import '../widgets/widgets.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

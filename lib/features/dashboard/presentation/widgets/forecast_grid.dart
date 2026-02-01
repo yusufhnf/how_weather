@@ -18,7 +18,8 @@ class ForecastGrid extends StatelessWidget {
         builder: (context, state) {
           return state.maybeWhen(
             forecastLoading: (_) => _buildLoadingGrid(),
-            forecastLoaded: (_, forecasts, __, ___) => _buildLoadedGrid(forecasts),
+            forecastLoaded: (_, forecasts, __, ___) =>
+                _buildLoadedGrid(forecasts),
             forecastError: (_, message) => _buildErrorView(message, context),
             orElse: () => _buildLoadingGrid(),
           );
@@ -77,16 +78,13 @@ class ForecastGrid extends StatelessWidget {
         crossAxisSpacing: AppDimensions.width16,
         childAspectRatio: 3 / 2,
       ),
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (index >= forecasts.length) {
-            return SizedBox.shrink();
-          }
-          final forecast = forecasts[index];
-          return ForecastCard(forecast: forecast);
-        },
-        childCount: forecasts.length > 20 ? 20 : forecasts.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        if (index >= forecasts.length) {
+          return SizedBox.shrink();
+        }
+        final forecast = forecasts[index];
+        return ForecastCard(forecast: forecast);
+      }, childCount: forecasts.length > 20 ? 20 : forecasts.length),
     );
   }
 

@@ -5,10 +5,7 @@ import '../../../../../core/core.dart';
 import '../../domain/entities/weather_forecast.dart';
 
 class ForecastCard extends StatelessWidget {
-  const ForecastCard({
-    super.key,
-    required this.forecast,
-  });
+  const ForecastCard({super.key, required this.forecast});
 
   final WeatherForecast forecast;
 
