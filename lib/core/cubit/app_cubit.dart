@@ -2,86 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../services/hive_service.dart';
-import '../services/secure_storage_service.dart';
+import '../services/app_settings_service.dart';
+import '../../features/login/domain/entities/user_entity.dart';
+import '../../features/login/domain/repositories/user_session_repository.dart';
 import 'app_state.dart';
 
-@lazySingleton
+@singleton
 class AppCubit extends Cubit<AppState> {
-  final HiveService _hiveService;
-  final SecureStorageService _secureStorageService;
+  final UserSessionRepository _userSessionRepository;
+  final AppSettingsService _appSettingsService;
 
-  static const String _themeKey = 'theme_mode';
-  static const String _localeKey = 'locale';
-  static const String _tokenKey = 'user_token';
-  static const String _userIdKey = 'user_id';
-
-  AppCubit(this._hiveService, this._secureStorageService)
-    : super(const AppState());
+  AppCubit({
+    required UserSessionRepository userSessionRepository,
+    required AppSettingsService appSettingsService,
+  }) : _userSessionRepository = userSessionRepository,
+       _appSettingsService = appSettingsService,
+       super(const AppState());
 
   Future<void> init() async {
     await _loadTheme();
     await _loadLocale();
-    await _loadAuthState();
+    await _loadUserLogged();
   }
 
   Future<void> _loadTheme() async {
-    final themeModeIndex = await _hiveService.getTyped<int>(key: _themeKey);
-    if (themeModeIndex != null) {
-      final themeMode = ThemeMode.values[themeModeIndex];
+    final themeMode = await _appSettingsService.getThemeMode();
+    if (themeMode != null) {
       emit(state.copyWith(themeMode: themeMode));
     }
   }
 
   Future<void> _loadLocale() async {
-    final localeString = await _hiveService.getTyped<String>(key: _localeKey);
-    if (localeString != null) {
-      final parts = localeString.split('_');
-      if (parts.length == 2) {
-        final locale = Locale(parts[0], parts[1]);
-        emit(state.copyWith(locale: locale));
-      }
+    final locale = await _appSettingsService.getLocale();
+    if (locale != null) {
+      emit(state.copyWith(locale: locale));
     }
   }
 
-  Future<void> _loadAuthState() async {
-    final token = await _secureStorageService.read(key: _tokenKey);
-    final userId = await _secureStorageService.read(key: _userIdKey);
-
-    if (token != null && userId != null) {
-      emit(
-        state.copyWith(isAuthenticated: true, userToken: token, userId: userId),
-      );
+  Future<void> _loadUserLogged() async {
+    final user = await _userSessionRepository.getUser();
+    if (user != null) {
+      emit(state.copyWith(userLogged: user));
     }
   }
 
   Future<void> changeTheme(ThemeMode themeMode) async {
     emit(state.copyWith(themeMode: themeMode));
-    await _hiveService.put(key: _themeKey, value: themeMode.index);
+    await _appSettingsService.saveThemeMode(themeMode);
   }
 
   Future<void> changeLocale(Locale locale) async {
     emit(state.copyWith(locale: locale));
-    await _hiveService.put(
-      key: _localeKey,
-      value: '${locale.languageCode}_${locale.countryCode}',
-    );
+    await _appSettingsService.saveLocale(locale);
   }
 
-  Future<void> login({required String token, required String userId}) async {
-    await _secureStorageService.write(key: _tokenKey, value: token);
-    await _secureStorageService.write(key: _userIdKey, value: userId);
-
-    emit(
-      state.copyWith(isAuthenticated: true, userToken: token, userId: userId),
-    );
+  Future<void> login(UserEntity user) async {
+    await _userSessionRepository.saveUser(user);
+    emit(state.copyWith(userLogged: user));
   }
 
   Future<void> logout() async {
-    await _secureStorageService.delete(key: _tokenKey);
-    await _secureStorageService.delete(key: _userIdKey);
-
-    emit(state.copyWith(isAuthenticated: false, userToken: null, userId: null));
+    await _userSessionRepository.clearUser();
+    emit(state.copyWith(userLogged: null));
   }
 
   bool get isLightTheme => state.themeMode == ThemeMode.light;

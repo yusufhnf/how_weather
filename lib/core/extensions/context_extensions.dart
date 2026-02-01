@@ -28,7 +28,7 @@ extension ContextExtensions on BuildContext {
   bool get isKeyboardVisible => viewInsets.bottom > 0;
 
   // Getter for access to localization in the context
-  I18n get loc => AppLocalizations.of(this);
+  I18n get loc => Localizations.of(this, I18n)!;
 
   void unfocus() => FocusScope.of(this).unfocus();
 

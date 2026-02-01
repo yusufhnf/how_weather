@@ -10,6 +10,7 @@ import 'package:how_weather/core/core.dart';
 import 'package:how_weather/features/dashboard/domain/entities/weather_forecast.dart';
 import 'package:how_weather/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:how_weather/features/dashboard/presentation/pages/dashboard_screen.dart';
+import 'package:how_weather/features/login/domain/entities/user_entity.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:shimmer/shimmer.dart';
@@ -58,7 +59,12 @@ void main() {
       const AppState(
         themeMode: ThemeMode.light,
         locale: Locale('en', 'US'),
-        isAuthenticated: true,
+        userLogged: UserEntity(
+          id: '1',
+          email: 'test@test.com',
+          name: 'Test',
+          token: 'token',
+        ),
       ),
     );
     when(

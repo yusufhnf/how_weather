@@ -63,6 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             orElse: () => null,
           );
           return Scaffold(
+            drawer: const DashboardDrawer(),
             body: CustomRefreshIndicator(
               onRefresh: () async {
                 context.read<DashboardCubit>().refreshForecast();

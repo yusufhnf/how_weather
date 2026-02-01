@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/cubit/app_cubit.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 
@@ -11,9 +12,11 @@ part 'login_cubit.freezed.dart';
 @injectable
 class LoginCubit extends Cubit<LoginState> {
   final LoginUseCase _loginUseCase;
+  final AppCubit _appCubit;
 
-  LoginCubit({required LoginUseCase loginUseCase})
+  LoginCubit({required LoginUseCase loginUseCase, required AppCubit appCubit})
     : _loginUseCase = loginUseCase,
+      _appCubit = appCubit,
       super(const LoginState.initial());
 
   Future<void> login({required String email, required String password}) async {
@@ -23,10 +26,12 @@ class LoginCubit extends Cubit<LoginState> {
       LoginParams(email: email, password: password),
     );
 
-    result.fold(
-      (exception) => emit(LoginState.failure(exception.message)),
-      (user) => emit(LoginState.success(user)),
-    );
+    result.fold((exception) => emit(LoginState.failure(exception.message)), (
+      user,
+    ) async {
+      await _appCubit.login(user);
+      emit(LoginState.success(user));
+    });
   }
 
   void reset() {
