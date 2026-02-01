@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../localization/localization.dart';
 
-/// Validation utilities for form fields
 class Validators {
   Validators._();
 

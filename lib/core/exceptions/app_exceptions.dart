@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Base exception class for all app exceptions
-/// Used for error handling throughout the application with Either pattern
 class AppException extends Equatable implements Exception {
   final String message;
   final String? code;

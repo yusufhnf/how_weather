@@ -361,7 +361,7 @@ class AppLocalizations {
     if (locale.languageCode == 'id') {
       return const I18nId();
     }
-    return const I18nId();
+    return const I18nEn();
   }
 
   // For backward compatibility and global access

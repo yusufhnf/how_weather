@@ -107,7 +107,6 @@ class AppDimensions {
   static double style80 = 80.sp;
   static double style90 = 90.sp;
 
-  // Gets the exact width and height of the device screen
   static double screenHeight = ScreenUtil().screenHeight;
   static double screenWidth = ScreenUtil().screenWidth;
 
