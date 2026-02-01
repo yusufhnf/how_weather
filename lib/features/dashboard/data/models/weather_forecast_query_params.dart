@@ -8,6 +8,7 @@ class WeatherForecastQueryParams with _$WeatherForecastQueryParams {
     required double lat,
     required double lon,
     required String appid,
+    @Default('metric') String? units,
     int? cnt,
   }) = _WeatherForecastQueryParams;
 
@@ -18,6 +19,7 @@ class WeatherForecastQueryParams with _$WeatherForecastQueryParams {
       lat: map['lat'] as double,
       lon: map['lon'] as double,
       appid: map['appid'] as String,
+      units: map['units'] as String? ?? 'metric',
       cnt: map['cnt'] as int?,
     );
   }
@@ -27,6 +29,7 @@ class WeatherForecastQueryParams with _$WeatherForecastQueryParams {
       'lat': lat.toString(),
       'lon': lon.toString(),
       'appid': appid,
+      'units': units,
       if (cnt != null) 'cnt': cnt.toString(),
     };
   }

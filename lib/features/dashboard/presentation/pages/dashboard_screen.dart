@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/core.dart';
 import '../../domain/entities/weather_forecast.dart';
@@ -37,12 +38,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<DashboardCubit>(),
-      child: BlocSelector<DashboardCubit, DashboardState, bool>(
-        selector: (state) => state.maybeWhen(
-          scrollChanged: (isCollapsed) => isCollapsed,
-          orElse: () => false,
-        ),
-        builder: (context, isCollapsed) {
+      child: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          final isCollapsed = state.isCollapsed;
           if (!_listenerAdded) {
             _onScrollCallback = () {
               context.read<DashboardCubit>().updateScrollPosition(
@@ -53,17 +51,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _scrollController.addListener(_onScrollCallback);
             _listenerAdded = true;
           }
+          final city = state.maybeWhen(
+            forecastLoaded: (_, __, city) => city,
+            orElse: () => null,
+          );
+          final currentForecast = state.maybeWhen(
+            forecastLoaded: (_, forecasts, __) =>
+                forecasts.isNotEmpty ? forecasts[0] : null,
+            orElse: () => null,
+          );
           return Scaffold(
             body: CustomScrollView(
               controller: _scrollController,
               slivers: [
-                DashboardAppBar(isCollapsed: isCollapsed),
+                DashboardAppBar(
+                  isCollapsed: isCollapsed,
+                  city: city,
+                  currentForecast: currentForecast,
+                ),
                 SliverPadding(
                   padding: EdgeInsets.all(AppDimensions.width16),
                   sliver: BlocBuilder<DashboardCubit, DashboardState>(
                     builder: (context, state) {
                       return state.maybeWhen(
-                        forecastLoading: () => SliverGrid(
+                        forecastLoading: (_) => SliverGrid(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
@@ -72,13 +83,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 childAspectRatio: 3 / 2,
                               ),
                           delegate: SliverChildBuilderDelegate(
-                            (context, index) => Card(
-                              child: Center(child: CircularProgressIndicator()),
+                            (context, index) => Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Card(
+                                child: Padding(
+                                  padding: EdgeInsets.all(AppDimensions.width8),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        height: AppDimensions.style14,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: AppDimensions.height5),
+                                      Container(
+                                        height: AppDimensions.style18,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: AppDimensions.height5),
+                                      Container(
+                                        height: AppDimensions.style12,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
-                            childCount: 20,
+                            childCount: 6,
                           ),
                         ),
-                        forecastLoaded: (forecasts) => SliverGrid(
+                        forecastLoaded: (_, forecasts, __) => SliverGrid(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
@@ -99,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 : forecasts.length,
                           ),
                         ),
-                        forecastError: (message) => SliverToBoxAdapter(
+                        forecastError: (_, message) => SliverToBoxAdapter(
                           child: Center(
                             child: Padding(
                               padding: EdgeInsets.all(AppDimensions.width16),
@@ -134,9 +170,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 childAspectRatio: 3 / 2,
                               ),
                           delegate: SliverChildBuilderDelegate(
-                            (context, index) =>
-                                Card(child: Center(child: Text('Loading...'))),
-                            childCount: 20,
+                            (context, index) => Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Card(
+                                child: Padding(
+                                  padding: EdgeInsets.all(AppDimensions.width8),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        height: AppDimensions.style14,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: AppDimensions.height5),
+                                      Container(
+                                        height: AppDimensions.style18,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: AppDimensions.height5),
+                                      Container(
+                                        height: AppDimensions.style12,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            childCount: 6,
                           ),
                         ),
                       );
@@ -160,7 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? '${forecast.main!.temp!.toStringAsFixed(1)}°C'
         : 'N/A';
     final description = forecast.weather?.isNotEmpty == true
-        ? forecast.weather!.first.description ?? 'Unknown'
+        ? forecast.weather!.first.description?.toTitleCase() ?? 'Unknown'
         : 'Unknown';
 
     return Card(

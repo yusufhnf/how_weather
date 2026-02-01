@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/core.dart';
+import '../../domain/entities/weather_forecast.dart';
 import 'weather_detail_widget.dart';
 
 class DashboardAppBar extends StatelessWidget {
-  const DashboardAppBar({super.key, required this.isCollapsed});
+  const DashboardAppBar({
+    super.key,
+    required this.isCollapsed,
+    this.city,
+    this.currentForecast,
+  });
 
   final bool isCollapsed;
+  final City? city;
+  final WeatherForecast? currentForecast;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +27,7 @@ class DashboardAppBar extends StatelessWidget {
               children: [
                 Icon(
                   Icons.wb_sunny,
-                  color: Colors.yellow.shade300,
+                  color: const Color.fromARGB(255, 37, 36, 21),
                   size: AppDimensions.style24,
                 ),
                 SizedBox(width: AppDimensions.width8),
@@ -27,7 +35,7 @@ class DashboardAppBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Jakarta, Indonesia',
+                      '${city?.name ?? 'Unknown'}, ${city?.country ?? ''}',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: AppDimensions.style16,
@@ -35,7 +43,7 @@ class DashboardAppBar extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Clear Sky • 28°C',
+                      '${currentForecast?.weather?.firstOrNull?.description ?? 'Unknown'} • ${currentForecast?.main?.temp != null ? '${currentForecast!.main!.temp!.toStringAsFixed(1)}°C' : 'N/A'}',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: AppDimensions.style12,
@@ -68,25 +76,6 @@ class DashboardAppBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    children: [
-                      Icon(
-                        Icons.push_pin,
-                        color: Colors.white,
-                        size: AppDimensions.style24,
-                      ),
-                      SizedBox(width: AppDimensions.width8),
-                      Text(
-                        'Pinned Location',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: AppDimensions.style14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: AppDimensions.height8),
-                  Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(
@@ -100,7 +89,7 @@ class DashboardAppBar extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Jakarta, Indonesia',
+                              '${city?.name ?? 'Unknown'}, ${city?.country ?? ''}',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: AppDimensions.style20,
@@ -108,7 +97,9 @@ class DashboardAppBar extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Clear Sky',
+                              currentForecast?.weather?.firstOrNull?.description
+                                      ?.toTitleCase() ??
+                                  'Unknown',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: AppDimensions.style16,
@@ -121,7 +112,9 @@ class DashboardAppBar extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '28°C',
+                            currentForecast?.main?.temp != null
+                                ? '${currentForecast!.main!.temp!.toStringAsFixed(1)}°C'
+                                : 'N/A',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: AppDimensions.style48,
@@ -129,7 +122,9 @@ class DashboardAppBar extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Feels like 32°C',
+                            currentForecast?.main?.feelsLike != null
+                                ? 'Feels like ${currentForecast!.main!.feelsLike!.toStringAsFixed(1)}°C'
+                                : 'N/A',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: AppDimensions.style12,
@@ -146,22 +141,30 @@ class DashboardAppBar extends StatelessWidget {
                       WeatherDetailWidget(
                         icon: Icons.water_drop,
                         label: 'Humidity',
-                        value: '65%',
+                        value: currentForecast?.main?.humidity != null
+                            ? '${currentForecast!.main!.humidity}%'
+                            : 'N/A',
                       ),
                       WeatherDetailWidget(
                         icon: Icons.air,
                         label: 'Wind',
-                        value: '12 km/h',
+                        value: currentForecast?.wind?.speed != null
+                            ? '${currentForecast!.wind!.speed} km/h'
+                            : 'N/A',
                       ),
                       WeatherDetailWidget(
                         icon: Icons.visibility,
                         label: 'Visibility',
-                        value: '10 km',
+                        value: currentForecast?.visibility != null
+                            ? '${currentForecast!.visibility} km'
+                            : 'N/A',
                       ),
                       WeatherDetailWidget(
                         icon: Icons.compress,
                         label: 'Pressure',
-                        value: '1013 hPa',
+                        value: currentForecast?.main?.pressure != null
+                            ? '${currentForecast!.main!.pressure} hPa'
+                            : 'N/A',
                       ),
                     ],
                   ),

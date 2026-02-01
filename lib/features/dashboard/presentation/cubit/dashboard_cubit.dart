@@ -21,13 +21,18 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> _loadWeatherForecast() async {
-    emit(DashboardState.forecastLoading());
+    emit(DashboardState.forecastLoading(isCollapsed: state.isCollapsed));
 
     final locationResult = await _locationService.getCurrentLocation();
 
     await locationResult.fold(
       (error) async {
-        emit(DashboardState.forecastError(message: error.message));
+        emit(
+          DashboardState.forecastError(
+            message: error,
+            isCollapsed: state.isCollapsed,
+          ),
+        );
       },
       (position) async {
         final forecastResult = await _getWeatherForecastUseCase(
@@ -37,10 +42,21 @@ class DashboardCubit extends Cubit<DashboardState> {
 
         forecastResult.fold(
           (error) {
-            emit(DashboardState.forecastError(message: error.message));
+            emit(
+              DashboardState.forecastError(
+                message: error,
+                isCollapsed: state.isCollapsed,
+              ),
+            );
           },
           (response) {
-            emit(DashboardState.forecastLoaded(forecasts: response.list ?? []));
+            emit(
+              DashboardState.forecastLoaded(
+                forecasts: response.list ?? [],
+                city: response.city,
+                isCollapsed: state.isCollapsed,
+              ),
+            );
           },
         );
       },
@@ -56,13 +72,10 @@ class DashboardCubit extends Cubit<DashboardState> {
         controller.offset > (expandedHeight - kToolbarHeight);
 
     // Only emit new state if the collapsed state has changed
-    final currentIsCollapsed = state.maybeWhen(
-      scrollChanged: (isCollapsed) => isCollapsed,
-      orElse: () => false,
-    );
+    final currentIsCollapsed = state.isCollapsed;
 
     if (isCollapsed != currentIsCollapsed) {
-      emit(DashboardState.scrollChanged(isCollapsed: isCollapsed));
+      emit(state.copyWith(isCollapsed: isCollapsed));
     }
   }
 
