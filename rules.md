@@ -40,6 +40,7 @@ Shared functionality across features:
 * `ui/` - Themes, shared widgets, generated assets
 * `localization/` - i18n support
 * `exceptions/` - Custom exception handling
+* `validation/` - Reusable form validators
 
 ## Interaction Guidelines
 * **User Persona:** Assume the user is familiar with programming concepts but
@@ -79,8 +80,7 @@ lib/
       injector.dart       # GetIt configuration
       register_module.dart # Third-party dependencies
     exceptions/
-      app_exceptions.dart # Custom exceptions
-      failures.dart       # Failure classes for Either
+      app_exceptions.dart # Custom exceptions for Either pattern
     extensions/
       context_extensions.dart
       string_extensions.dart
@@ -106,6 +106,8 @@ lib/
         error_widget.dart
     utils/
       use_case.dart      # Base UseCase class
+    validation/
+      validators.dart    # Form validation utilities
   features/
     README.md            # Feature structure documentation
   main.dart
@@ -132,8 +134,7 @@ lib/
    - `app_router.dart` - GoRouter configuration
 
 5. **Exceptions & Failures** (`core/exceptions/`)
-   - `app_exceptions.dart` - Custom exceptions
-   - `failures.dart` - Failure classes for Either pattern
+   - `app_exceptions.dart` - Custom exceptions for error handling
 
 6. **Constants** (`core/constants/`)
    - `num_constants.dart` - Numeric constants
@@ -158,7 +159,10 @@ lib/
 11. **Utils** (`core/utils/`)
     - `use_case.dart` - Base UseCase class for domain layer
 
-12. **Main Entry** 
+12. **Validation** (`core/validation/`)
+    - `validators.dart` - Reusable form validators for email, password, etc.
+
+13. **Main Entry** 
     - `main.dart` - App initialization with AppCubit provider
 
 ### Initialization Steps
@@ -267,8 +271,9 @@ lib/
   for situations specific to your code. This project defines custom exceptions
   in `core/exceptions/app_exceptions.dart`.
 * **Error Handling with Dartz:** This project uses `dartz` for functional error
-  handling. Use `Either<Failure, Success>` pattern in repositories and use cases
-  to handle errors gracefully without throwing exceptions.
+  handling. Use `Either<AppException, Success>` pattern in repositories and use cases
+  to handle errors gracefully. All exceptions extend `AppException` which includes
+  Equatable for comparison and proper error messages.
 * **Arrow Functions:** Use arrow syntax for simple one-line functions.
 
 ## Flutter Best Practices
@@ -308,6 +313,47 @@ When building reusable APIs, such as a library, follow these principles.
 * **Feature-based Organization:** For larger projects, organize code by feature,
   where each feature has its own presentation, domain, and data subfolders. This
   improves navigability and scalability.
+
+## Extensions & Context Helpers
+* **ContextExtensions:** This project provides convenient extensions on `BuildContext`
+  in `core/extensions/context_extensions.dart` to simplify common operations:
+* **Theme Access:** Quick access to theme properties:
+  ```dart
+  context.theme        // ThemeData
+  context.textTheme    // TextTheme
+  context.colorScheme  // ColorScheme
+  ```
+* **Media Query:** Simplified screen size and padding access:
+  ```dart
+  context.screenWidth
+  context.screenHeight
+  context.topPadding
+  context.bottomPadding
+  context.isKeyboardVisible
+  ```
+* **Localization Access:** Direct access to localized strings via `context.i18n`:
+  ```dart
+  // Instead of: final i18n = AppLocalizations.of(context);
+  Text(context.i18n.welcomeBack)
+  Text(context.i18n.loginSuccess(user.name))
+  
+  // In validators
+  validator: (value) => Validators.email(value, context)
+  // Internally uses: context.i18n.emailRequired
+  ```
+* **Navigation Helpers:**
+  ```dart
+  context.push(NextScreen())
+  context.pop()
+  context.unfocus() // Dismiss keyboard
+  ```
+* **Snackbar Helper:**
+  ```dart
+  context.showSnackBar('Success message')
+  context.showSnackBar('Error', duration: Duration(seconds: 5))
+  ```
+* **Usage Pattern:** Always prefer `context.i18n` over `AppLocalizations.of(context)`
+  for cleaner, more readable code throughout the application.
 
 ## Lint Rules
 
@@ -421,10 +467,22 @@ linter:
 * **Use Cases:** Business logic is encapsulated in use case classes in the
   domain layer. Each use case represents a single business operation.
 * **Error Handling:** Use `dartz` Either type for error handling:
-  - Left side contains failures (custom exception objects)
+  - Left side contains exceptions (AppException and its subclasses)
   - Right side contains successful results
   ```dart
-  Future<Either<Failure, User>> getUser(String id);
+  Future<Either<AppException, User>> getUser(String id);
+  ```
+* **Exception Flow:** In repositories, catch thrown exceptions and return them
+  in Either's Left side. Don't convert to different exception types:
+  ```dart
+  try {
+    final result = await dataSource.getData();
+    return Right(result);
+  } on NetworkException catch (e) {
+    return Left(e); // Return the exception directly
+  } catch (e) {
+    return Left(UnknownException(e.toString()));
+  }
   ```
 
 ### Routing
@@ -529,16 +587,174 @@ linter:
 * **Error Handling:** Define custom exceptions in `core/exceptions/` for
   handling various HTTP error scenarios.
 
+### Form Validation
+* **Validators Class:** This project uses a centralized `Validators` class in
+  `core/validation/validators.dart` for all form validation logic.
+* **Reusability:** All validators are static methods that can be used across
+  different screens and features, promoting DRY (Don't Repeat Yourself) principle.
+* **Localized Messages:** All validators require `BuildContext` parameter to
+  access localized error messages from `AppLocalizations.of(context)`.
+* **Case 1 - Using Validators with Context:** Wrap validators in anonymous
+  functions to pass BuildContext:
+  ```dart
+  TextFormField(
+    controller: emailController,
+    decoration: InputDecoration(labelText: i18n.email),
+    validator: (value) => Validators.email(value, context),
+    autovalidateMode: AutovalidateMode.onUserInteraction,
+  )
+  
+  TextFormField(
+    controller: passwordController,
+    decoration: InputDecoration(labelText: i18n.password),
+    validator: (value) => Validators.password(value, context), // Uses default minLength of 8
+    obscureText: true,
+  )
+  ```
+* **Case 2 - Using Validators with Custom Parameters:** Pass both context and
+  custom parameters:
+  ```dart
+  TextFormField(
+    controller: passwordController,
+    decoration: InputDecoration(labelText: i18n.password),
+    validator: (value) => Validators.password(value, context, minLength: 12), // Custom minimum length
+    obscureText: true,
+  )
+  
+  TextFormField(
+    controller: nameController,
+    decoration: InputDecoration(labelText: i18n.name),
+    validator: (value) => Validators.minLength(value, 3, context, fieldName: 'Name'),
+  )
+  
+  TextFormField(
+    controller: confirmPasswordController,
+    decoration: InputDecoration(labelText: i18n.confirmPassword),
+    validator: (value) => Validators.match(value, passwordController.text, context, fieldName: 'Password'),
+  )
+  ```
+* **Available Validators:**
+  - `Validators.email(value, context)` - Email format validation
+  - `Validators.password(value, context, {minLength: 8})` - Password with minimum length
+  - `Validators.required(value, context, {fieldName: 'Field'})` - Required field check
+  - `Validators.minLength(value, min, context, {fieldName})` - Minimum character length
+  - `Validators.maxLength(value, max, context, {fieldName})` - Maximum character length
+  - `Validators.phoneNumber(value, context)` - Phone number format
+  - `Validators.url(value, context)` - URL format validation
+  - `Validators.match(value, compareValue, context, {fieldName})` - Match two fields
+  - `Validators.numeric(value, context, {fieldName})` - Numeric input only
+  - `Validators.alphabetic(value, context, {fieldName})` - Letters only
+  - `Validators.alphanumeric(value, context, {fieldName})` - Letters and numbers only
+* **Localized Error Messages:** All validators return error messages from I18n based
+  on current locale. Messages automatically switch between English and Indonesian.
+* **Validation Pattern:** Always use `autovalidateMode: AutovalidateMode.onUserInteraction`
+  for better UX, showing errors only after user starts typing.
+
 ### Localization
-* **Custom I18n:** This project uses a custom internationalization setup in
-  `core/localization/`.
-* **I18n Class:** Access translations through the `I18n` class with locale-specific
-  methods and properties.
-* **AppLocalizations:** Use the singleton `AppLocalizations.loc` to access
-  localized strings throughout the app.
-* **Delegate:** The `I18nDelegate` is registered in `MaterialApp` to provide
-  localization support.
-* **Supported Locales:** Define supported locales in `I18nDelegate.supportedLocals`.
+* **Multi-language Support:** This project uses a custom internationalization
+  setup in `core/localization/` with support for **English (en)** and 
+  **Indonesian (id)** languages.
+* **I18n Interface:** The `I18n` abstract class defines all localization strings
+  with implementations `I18nEn` (English) and `I18nId` (Indonesian).
+* **Accessing Translations:** Use `context.i18n` extension for cleaner access to
+  localized strings (recommended) or `AppLocalizations.of(context)`:
+  ```dart
+  // Recommended: Using context extension
+  Text(context.i18n.welcomeBack)
+  Text(context.i18n.loginSuccess(user.name))
+  
+  // Alternative: Direct AppLocalizations access
+  final i18n = AppLocalizations.of(context);
+  Text(i18n.welcomeBack)
+  ```
+* **Supported Locales:** Both `Locale('en', 'US')` and `Locale('id', 'ID')` are
+  supported in `I18nDelegate.supportedLocales`.
+* **String Types:** The I18n interface includes:
+  - Simple getters: `context.i18n.login`, `context.i18n.email`, `context.i18n.password`
+  - Methods with parameters: `context.i18n.loginSuccess(name)`, `context.i18n.passwordMinLength(8)`
+* **Delegate Registration:** Register `I18nDelegate` in `MaterialApp`:
+  ```dart
+  MaterialApp(
+    localizationsDelegates: [
+      const I18nDelegate(),
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: I18nDelegate.supportedLocales,
+  )
+  ```
+
+#### Localization Guidelines for Features
+* **Rule 1 - Never Use Hardcoded Strings in UI:** All user-facing strings (labels,
+  buttons, titles, messages) MUST be localized. Always use `context.i18n` extension
+  for cleaner access:
+  ```dart
+  // ❌ Bad - Hardcoded string
+  Text('Welcome Back')
+  ElevatedButton(child: Text('Login'))
+  
+  // ✅ Good - Localized string with context extension
+  Text(context.i18n.welcomeBack)
+  ElevatedButton(child: Text(context.i18n.login))
+  
+  // ✅ Also acceptable - Direct AppLocalizations access
+  final i18n = AppLocalizations.of(context);
+  Text(i18n.welcomeBack)
+  ```
+* **Rule 2 - Localize All Validation Messages:** Validators must accept `BuildContext`
+  to access localized error messages. Never return hardcoded error strings:
+  ```dart
+  // ❌ Bad - Hardcoded validation message
+  static String? email(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    return null;
+  }
+  
+  // ✅ Good - Localized validation message using context.i18n
+  static String? email(String? value, BuildContext context) {
+    if (value == null || value.isEmpty) {
+      return context.i18n.emailRequired;
+    }
+    return null;
+  }
+  
+  // Usage in TextFormField
+  TextFormField(
+    validator: (value) => Validators.email(value, context),
+  )
+  ```
+* **Adding New Strings:** When creating new features or screens:
+  1. Add new string getters/methods to the `I18n` abstract class
+  2. Implement in both `I18nEn` and `I18nId` classes
+  3. Use `context.i18n` to access in widgets for cleaner code
+  4. For validators, always pass `BuildContext` parameter
+* **Success/Error Messages:** All user feedback messages must be localized:
+  ```dart
+  // ✅ Success message with parameter using context.i18n
+  context.showSnackBar(context.i18n.loginSuccess(user.name))
+  
+  // ✅ Error messages
+  context.showSnackBar(context.i18n.networkError)
+  context.showSnackBar(context.i18n.serverError)
+  ```
+* **Dynamic Content:** For strings with dynamic values, use methods with parameters:
+  ```dart
+  // In I18n interface
+  String loginSuccess(String name);
+  String passwordMinLength(int length);
+  
+  // In I18nEn
+  String loginSuccess(String name) => 'Login successful! Welcome $name';
+  
+  // In I18nId
+  String loginSuccess(String name) => 'Login berhasil! Selamat datang $name';
+  
+  // Usage with context.i18n
+  Text(context.i18n.loginSuccess('John'))
+  ```
 
   ```dart
   import 'dart:developer' as developer;

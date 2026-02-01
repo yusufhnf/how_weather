@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
                 routerConfig: AppRouter.router,
                 locale: appState.locale,
                 localizationsDelegates: const [I18nDelegate()],
-                supportedLocales: I18nDelegate.supportedLocals,
+                supportedLocales: I18nDelegate.supportedLocales,
               );
             },
           );
