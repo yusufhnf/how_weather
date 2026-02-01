@@ -93,4 +93,31 @@ class DashboardCubit extends Cubit<DashboardState> {
   void refreshForecast() {
     _loadWeatherForecast(forceGetFromRemote: true);
   }
+
+  Future<void> reorderForecasts(int oldIndex, int newIndex) async {
+    final currentState = state;
+    if (currentState is _DashboardForecastLoaded) {
+      final forecasts = List<WeatherForecast>.from(currentState.forecasts);
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final item = forecasts.removeAt(oldIndex);
+      forecasts.insert(newIndex, item);
+
+      // Update state immediately for UI feedback
+      emit(currentState.copyWith(forecasts: forecasts));
+
+      // Save reordered forecasts to local storage
+      final result = await _repository.saveReorderedForecasts(forecasts);
+      result.fold(
+        (error) {
+          // If saving fails, revert the change
+          emit(currentState);
+        },
+        (_) {
+          // Successfully saved, state is already updated
+        },
+      );
+    }
+  }
 }

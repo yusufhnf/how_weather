@@ -10,4 +10,5 @@ abstract class WeatherForecastRepository {
     forceGetFromRemote = false,
   });
   Future<DateTime?> getLastUpdated();
+  Future<Either<AppException, void>> saveReorderedForecasts(List<WeatherForecast> forecasts);
 }

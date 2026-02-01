@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../../core/core.dart';
@@ -19,7 +20,7 @@ class ForecastGrid extends StatelessWidget {
           return state.maybeWhen(
             forecastLoading: (_) => _buildLoadingGrid(),
             forecastLoaded: (_, forecasts, __, ___) =>
-                _buildLoadedGrid(forecasts),
+                _buildLoadedGrid(context, forecasts),
             forecastError: (_, message) => _buildErrorView(message, context),
             orElse: () => _buildLoadingGrid(),
           );
@@ -70,21 +71,30 @@ class ForecastGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadedGrid(List<WeatherForecast> forecasts) {
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: AppDimensions.height16,
-        crossAxisSpacing: AppDimensions.width16,
-        childAspectRatio: 3 / 2,
+  Widget _buildLoadedGrid(BuildContext context, List<WeatherForecast> forecasts) {
+    final displayForecasts = forecasts.length > 20 ? forecasts.sublist(0, 20) : forecasts;
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: AppDimensions.width16),
+        child: ReorderableGridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: AppDimensions.height16,
+          crossAxisSpacing: AppDimensions.width16,
+          childAspectRatio: 3 / 2,
+          children: displayForecasts.map((forecast) {
+            return ForecastCard(
+              key: ValueKey(forecast.dt),
+              forecast: forecast,
+            );
+          }).toList(),
+          onReorder: (oldIndex, newIndex) {
+            context.read<DashboardCubit>().reorderForecasts(oldIndex, newIndex);
+          },
+        ),
       ),
-      delegate: SliverChildBuilderDelegate((context, index) {
-        if (index >= forecasts.length) {
-          return SizedBox.shrink();
-        }
-        final forecast = forecasts[index];
-        return ForecastCard(forecast: forecast);
-      }, childCount: forecasts.length > 20 ? 20 : forecasts.length),
     );
   }
 

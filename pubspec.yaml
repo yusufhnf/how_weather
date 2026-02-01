@@ -34,6 +34,7 @@ dependencies:
   json_annotation: ^4.9.0
   permission_handler: ^11.3.1
   pretty_dio_logger: ^1.4.0
+  reorderable_grid_view: ^2.2.8
   shared_preferences: ^2.3.4
   shimmer: ^3.0.0
   talker: ^4.6.1

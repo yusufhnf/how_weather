@@ -47,4 +47,14 @@ class WeatherForecastRepositoryImpl implements WeatherForecastRepository {
   Future<DateTime?> getLastUpdated() async {
     return _localDataSource.getLastUpdated();
   }
+
+  @override
+  Future<Either<AppException, void>> saveReorderedForecasts(List<WeatherForecast> forecasts) async {
+    try {
+      await _localDataSource.saveReorderedForecasts(forecasts);
+      return const Right(null);
+    } catch (e) {
+      return Left(AppException(code: 'SAVE_REORDER_ERROR', message: 'Failed to save reordered forecasts'));
+    }
+  }
 }
