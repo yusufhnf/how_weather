@@ -46,8 +46,8 @@ class TestWidgetBuilder {
     );
   }
 
-  static Widget buildMaterialAppWithRouter<T extends StateStreamableSource<S>,
-      S>({
+  static Widget
+  buildMaterialAppWithRouter<T extends StateStreamableSource<S>, S>({
     required GoRouter router,
     required T bloc,
     Size designSize = _designSize,

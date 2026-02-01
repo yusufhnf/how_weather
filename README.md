@@ -12,6 +12,7 @@ A modern Flutter weather application built with Clean Architecture principles, d
 - Comprehensive error handling with dartz Either
 - Local and secure storage solutions
 - Modern Material Design 3 theming
+- **Reusable test helpers for DRY, maintainable tests**
 
 ## 🏗️ Architecture
 
@@ -82,6 +83,12 @@ lib/
 │           ├── pages/
 │           └── widgets/
 └── main.dart
+
+test/
+├── features/
+│   └── ... (mirrors lib/features structure)
+└── helpers/
+    └── test_helpers.dart   # Centralized test utilities
 ```
 
 ## 🛠️ Getting Started
@@ -92,7 +99,7 @@ lib/
 - Android Studio / VS Code with Flutter extensions
 - Xcode (for iOS development)
 
-### Installation
+### Installation & Setup
 
 1. **Clone the repository**
    ```bash
@@ -100,20 +107,32 @@ lib/
    cd how_weather
    ```
 
-2. **Install dependencies**
+2. **Add environment variables**
+   - Copy `.env.example` to `.env` and fill in required values (API keys, etc.)
+   - If using multiple environments, create `.env.dev`, `.env.prod`, etc.
+
+3. **Clean and get dependencies**
    ```bash
+   flutter clean
    flutter pub get
    ```
 
-3. **Generate code**
+4. **Generate code**
    ```bash
-   dart run build_runner build --delete-conflicting-outputs
+   flutter packages pub run build_runner build --delete-conflicting-outputs
    ```
 
-4. **Run the app**
+5. **Run the app**
    ```bash
    flutter run
    ```
+
+6. **Login Sample**
+    ```bash
+   email: admin@meetucup.com
+    password: admin1234 
+   ```
+    
 
 ## 🔧 Development
 
@@ -123,34 +142,58 @@ This project uses code generation for:
 - **Injectable**: Dependency injection (`injector.config.dart`)
 - **Freezed**: Immutable data classes (`.freezed.dart`)
 - **JSON Serialization**: JSON parsing (`.g.dart`)
+- **Envied**: Environment variable management (`env_config.g.dart`)
+- **flutter_gen**: Type-safe asset references (`assets.gen.dart`)
 
 Run code generation when you add/modify:
 - Injectable classes (`@injectable`, `@lazySingleton`)
 - Freezed models (`@freezed`)
 - JSON serializable classes (`@JsonSerializable`)
+- Environment variables in `.env`
+- Asset declarations in `pubspec.yaml`
 
 ```bash
-# One-time generation
-dart run build_runner build --delete-conflicting-outputs
-
-# Watch mode (auto-generates on file changes)
-dart run build_runner watch --delete-conflicting-outputs
+flutter packages pub run build_runner build --delete-conflicting-outputs
+# Or watch mode:
+flutter packages pub run build_runner watch --delete-conflicting-outputs
 ```
 
 ### Running Tests
 
-```bash
-flutter test                    # Run all tests
-flutter test --coverage        # Run tests with coverage
-flutter test test/path/file_test.dart  # Run specific test
+- **All tests:**
+  ```bash
+  flutter test
+  ```
+- **With coverage:**
+  ```bash
+  flutter test --coverage
+  ```
+- **Specific file:**
+  ```bash
+  flutter test test/path/file_test.dart
+  ```
+
+#### Test Helpers
+
+This project uses centralized test helpers in `test/helpers/test_helpers.dart` for DRY, maintainable, and consistent test setup:
+- `TestWindowConfig`: Window size setup/reset for widget tests (multi-window API)
+- `TestWidgetBuilder`: MaterialApp, ScreenUtil, and BLoC provider wrappers
+- `TestStreamControllers`: Broadcast stream controller utilities
+
+**Usage Example:**
+```dart
+setUp(() {
+  TestWindowConfig.setupWindowSize();
+});
+tearDown(() {
+  TestWindowConfig.resetWindowSize();
+});
 ```
 
-### Code Analysis
-
-```bash
-flutter analyze                # Static analysis
-dart format lib/ test/         # Format code
-```
+**Best Practices:**
+- Remove unnecessary comments (e.g., // Arrange, // Act, // Assert)
+- Use helpers for all widget and BLoC test setup
+- Keep tests concise and focused
 
 ## 📦 Adding New Features
 
@@ -216,284 +259,56 @@ features/
    - Widget tests for presentation
    - Integration tests for critical flows
 
-## 🎨 Theme & Styling
+## 🧠 AI Workflow Implementation
 
-The app uses Material Design 3 with custom theming:
+This project is designed for seamless collaboration with AI coding assistants. To ensure high-quality, maintainable, and consistent code, follow these AI workflow guidelines:
 
-```dart
-// Access theme colors
-context.colorScheme.primary
-context.colorScheme.secondary
+### 1. Project Initialization
+- Use the Clean Architecture structure as defined above
+- Set up all core modules and feature folders
+- Configure dependency injection, theming, localization, and routing
+- Run code generation and verify with `flutter analyze`
 
-// Access text styles
-context.textTheme.headlineMedium
-context.textTheme.bodyLarge
+### 2. Feature Development
+- Always start with the domain layer (entities, repository interface, use case)
+- Implement data layer (models, datasources, mappers, repository)
+- Implement presentation layer (state, cubit, page, widgets)
+- Register dependencies with `@injectable` or `@lazySingleton`
+- Add/modify routes in `app_router.dart`
+- Run code generation after changes
+- Write unit, widget, and integration tests for all new code
 
-// Change theme
-context.read<AppCubit>().changeTheme(ThemeMode.dark);
-```
+### 3. Testing & Code Quality
+- Use test helpers for all widget and BLoC tests
+- Remove unnecessary comments and keep tests clean
+- Aim for >90% code coverage
+- Run `flutter test` and `flutter analyze` before committing
 
-## 🌍 Localization
+### 4. Commit Messages
+- Use imperative, concise commit messages (e.g., "Add login cubit", "Fix theme bug")
+- Keep under 50 characters, no period at the end
 
-Add new translations in `lib/core/localization/i18n.dart`:
+### 5. Documentation
+- Update `README.md` and `rules.md` with any new patterns, dependencies, or workflows
+- Ensure documentation matches the actual implementation
 
-```dart
-static String get yourNewString => 'Your Translation';
-```
+### 6. Error Handling
+- Use `Either<Failure, Success>` for all error handling in domain/data layers
+- Use custom exceptions for all error cases
 
-Access translations:
-```dart
-I18n.yourNewString
-// or
-AppLocalizations.loc.yourNewString
-```
+### 7. Naming Conventions
+- Files: `snake_case.dart`
+- Classes: `PascalCase`
+- Variables/Functions: `camelCase`
+- Constants: `camelCase`
+- Cubits: `FeatureNameCubit`
+- States: `FeatureNameState`
+- Use Cases: `VerbNounUseCase`
+- Repositories: `FeatureNameRepository`
+- Models: `FeatureNameModel`
+- Entities: `FeatureNameEntity`
 
-## 🔐 State Management
-
-### Global State (AppCubit)
-For app-wide state (theme, auth, locale):
-
-```dart
-// Change theme
-context.read<AppCubit>().changeTheme(ThemeMode.dark);
-
-// Login
-await context.read<AppCubit>().login(token: token, userId: userId);
-
-// Watch state changes
-BlocBuilder<AppCubit, AppState>(
-  builder: (context, state) {
-    return Text('Theme: ${state.themeMode}');
-  },
-)
-```
-
-### Feature State (Feature Cubits)
-For feature-specific state, create feature cubits:
-
-```dart
-@injectable
-class FeatureCubit extends Cubit<FeatureState> {
-  final GetFeatureUseCase _getFeatureUseCase;
-  
-  FeatureCubit(this._getFeatureUseCase) : super(const FeatureState.initial());
-  
-  Future<void> loadFeature() async {
-    emit(const FeatureState.loading());
-    final result = await _getFeatureUseCase(NoParams());
-    result.fold(
-      (failure) => emit(FeatureState.error(failure.message)),
-      (data) => emit(FeatureState.loaded(data)),
-    );
-  }
-}
-```
-
-## 📝 Code Style Guidelines
-
-- Follow [Effective Dart](https://dart.dev/effective-dart)
-- Use `const` constructors whenever possible
-- Prefer composition over inheritance
-- Keep functions under 20 lines
-- Write descriptive variable names
-- Add documentation for public APIs
-- Use `Either<Failure, Success>` for error handling
-- Mark all Cubits/Blocs with `@injectable`
-- Use Freezed for all data classes
-
-## 🤖 AI Development Prompts
-
-### For AI Assistants Working on This Project
-
-When implementing features or modifying this codebase, follow these guidelines:
-
-#### 1. Initializing New Project Architecture
-
-**Prompt Template:**
-```
-Initialize a Flutter project following Clean Architecture with:
-- Core module structure (di, services, router, exceptions, extensions, theme, localization)
-- AppCubit for global state (theme, auth, locale)
-- Dependency injection with GetIt + Injectable
-- All required core files as defined in rules.md
-- Run code generation and verify build
-```
-
-**Expected Actions:**
-- Create all files in `lib/core/` following the structure in rules.md
-- Set up `main.dart` with AppCubit provider
-- Configure `pubspec.yaml` with all dependencies
-- Run `flutter pub get` and `dart run build_runner build`
-- Verify with `flutter analyze`
-
-#### 2. Creating a New Feature
-
-**Prompt Template:**
-```
-Create a new feature called [FEATURE_NAME] with:
-- Domain: [Entity], [Repository interface], [Use case]
-- Data: [Model with Freezed], [Remote/Local datasource], [Mapper], [Repository impl]
-- Presentation: [State with Freezed], [Cubit], [Page], [Widgets]
-- Follow Clean Architecture layers
-- Use Either<Failure, Success> for error handling
-- Add to router configuration
-- Generate code and verify
-```
-
-**Expected Actions:**
-1. Create feature folder structure
-2. Implement domain layer (entities, repository, use case)
-3. Implement data layer (models, datasources, mapper, repository)
-4. Implement presentation layer (state, cubit, page, widgets)
-5. Mark dependencies with `@injectable`
-6. Add routes to `app_router.dart`
-7. Run `dart run build_runner build`
-8. Create corresponding tests
-
-#### 3. Modifying Existing Features
-
-**Prompt Template:**
-```
-Modify [FEATURE_NAME] to [DESCRIPTION]:
-- Update domain layer if business logic changes
-- Update data layer if API/storage changes
-- Update presentation layer if UI changes
-- Maintain Clean Architecture boundaries
-- Update tests accordingly
-- Run code generation if needed
-```
-
-**Key Rules:**
-- Don't mix layer responsibilities
-- Update mappers if models/entities change
-- Regenerate code after Freezed/Injectable changes
-- Update tests to match changes
-- Use existing patterns and conventions
-
-#### 4. Adding Dependencies
-
-**Prompt Template:**
-```
-Add dependency [PACKAGE_NAME] for [PURPOSE]:
-- Add to pubspec.yaml in appropriate section
-- Register in RegisterModule if third-party
-- Create service wrapper if needed
-- Mark with @lazySingleton if singleton required
-- Update documentation
-```
-
-#### 5. Implementing State Management
-
-**Prompt Template:**
-```
-Implement state management for [FEATURE]:
-- Create FeatureState with Freezed (initial, loading, loaded, error states)
-- Create FeatureCubit with @injectable
-- Inject required use cases via constructor
-- Use Either for error handling
-- Emit appropriate states
-- Provide via BlocProvider in route or page
-```
-
-#### 6. Best Practices Checklist
-
-When implementing ANY code changes, ensure:
-
-**Architecture:**
-- [ ] Follow Clean Architecture layers
-- [ ] Data flows: UI → Cubit → Use Case → Repository → DataSource
-- [ ] Domain layer has no Flutter/external dependencies
-- [ ] Use dependency injection for all dependencies
-
-**State Management:**
-- [ ] Use Freezed for state classes
-- [ ] Mark Cubits with `@injectable` or `@lazySingleton`
-- [ ] Use `Either<Failure, Success>` pattern
-- [ ] Emit states for loading, success, error
-
-**Code Quality:**
-- [ ] Functions under 20 lines
-- [ ] Meaningful variable names
-- [ ] No abbreviations
-- [ ] Add documentation for public APIs
-- [ ] Use `const` constructors where possible
-
-**Code Generation:**
-- [ ] Run `dart run build_runner build` after changes
-- [ ] Verify no analysis errors with `flutter analyze`
-- [ ] Check generated files are created
-
-**Testing:**
-- [ ] Create unit tests for use cases
-- [ ] Create tests for repository implementations
-- [ ] Create widget tests for pages
-- [ ] Aim for >90% code coverage
-
-#### 7. Error Handling Pattern
-
-Always use this pattern for error handling:
-
-```dart
-// In repository
-Future<Either<Failure, Entity>> getData() async {
-  try {
-    final result = await dataSource.getData();
-    return Right(mapper.toEntity(result));
-  } on NetworkException {
-    return Left(NetworkFailure('Network error'));
-  } on ServerException {
-    return Left(ServerFailure('Server error'));
-  } catch (e) {
-    return Left(UnknownFailure(e.toString()));
-  }
-}
-
-// In use case
-Future<Either<Failure, Entity>> call(Params params) async {
-  return await repository.getData();
-}
-
-// In cubit
-Future<void> loadData() async {
-  emit(const State.loading());
-  final result = await useCase(NoParams());
-  result.fold(
-    (failure) => emit(State.error(failure.message)),
-    (data) => emit(State.loaded(data)),
-  );
-}
-```
-
-#### 8. Naming Conventions
-
-Follow these naming patterns:
-
-- **Files**: `snake_case.dart`
-- **Classes**: `PascalCase`
-- **Variables/Functions**: `camelCase`
-- **Constants**: `camelCase` (not SCREAMING_CASE)
-- **Private members**: `_leadingUnderscore`
-- **Cubits**: `FeatureNameCubit`
-- **States**: `FeatureNameState`
-- **Use Cases**: `VerbNounUseCase` (e.g., `GetWeatherUseCase`)
-- **Repositories**: `FeatureNameRepository`
-- **Models**: `FeatureNameModel`
-- **Entities**: `FeatureNameEntity`
-
-#### 9. Git Commit Messages
-
-Use this format (as per copilot-instructions.md):
-```
-Add feature description
-Fix specific issue
-Update component with changes
-Remove deprecated code
-```
-
-- Use imperative mood (Add, Fix, Update, Remove)
-- Keep under 50 characters
-- No periods at the end
-- Be specific and concise
+For more details, see `rules.md` in the project root.
 
 ## 🤝 Contributing
 

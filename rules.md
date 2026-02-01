@@ -860,7 +860,103 @@ test/
           login_screen_test.dart
       integration/
         login_integration_test.dart
+  helpers/
+    test_helpers.dart    # Reusable test utilities
 ```
+
+### Test Helpers
+
+This project includes reusable test utilities in `test/helpers/test_helpers.dart` to eliminate code duplication and maintain consistent test setup across all test files.
+
+#### TestWindowConfig
+
+Provides window size configuration for widget tests to prevent layout overflow and ensure consistent viewport dimensions:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import '../helpers/test_helpers.dart';
+
+void main() {
+  setUp(() {
+    TestWindowConfig.setupWindowSize(); // Default: 1080x1920
+    // Or custom size:
+    // TestWindowConfig.setupWindowSize(size: Size(800, 600), pixelRatio: 2.0);
+  });
+
+  tearDown(() {
+    TestWindowConfig.resetWindowSize();
+  });
+}
+```
+
+**Key Features:**
+* Default test window: 1080x1920 pixels (common mobile size)
+* Customizable size and pixel ratio
+* Proper cleanup with resetWindowSize()
+* Uses new Flutter multi-window API (`platformDispatcher.views.first`)
+
+#### TestWidgetBuilder
+
+Provides reusable widget builders with MaterialApp, ScreenUtilInit, theme, and BLoC integration:
+
+```dart
+// Simple MaterialApp wrapper
+Widget widget = TestWidgetBuilder.buildMaterialApp(
+  child: MyWidget(),
+);
+
+// With Router and single BLoC
+Widget widget = TestWidgetBuilder.buildMaterialAppWithRouter<MyCubit, MyState>(
+  router: myRouter,
+  bloc: mockCubit,
+);
+
+// With multiple BLoC providers
+Widget widget = TestWidgetBuilder.buildMaterialAppWithMultiProviders(
+  providers: [
+    BlocProvider<LoginCubit>.value(value: mockLoginCubit),
+    BlocProvider<AppCubit>.value(value: mockAppCubit),
+  ],
+  child: LoginScreen(),
+);
+```
+
+**Key Features:**
+* Automatic ScreenUtilInit integration (1080x1920 design size)
+* Includes AppTheme.lightTheme and AppTheme.darkTheme
+* Supports single or multiple BLoC providers
+* GoRouter integration for navigation tests
+* Customizable design size
+
+#### TestStreamControllers
+
+Utilities for managing stream controllers in tests:
+
+```dart
+void main() {
+  late StreamController<MyState> stateController;
+
+  setUp(() {
+    stateController = TestStreamControllers.createBroadcast<MyState>();
+  });
+
+  tearDown(() {
+    TestStreamControllers.closeAll([stateController, anotherController]);
+  });
+}
+```
+
+**Key Features:**
+* Create broadcast stream controllers
+* Batch close multiple controllers
+* Consistent controller lifecycle management
+
+#### Usage Guidelines
+
+* **Import once:** `import '../helpers/test_helpers.dart'` or `import '../../../../helpers/test_helpers.dart'` based on depth
+* **Window config:** Always use in setUp/tearDown for widget tests
+* **Widget builders:** Use instead of manually wrapping with MaterialApp + ScreenUtilInit
+* **Stream controllers:** Use for BLoC/Cubit testing with proper cleanup
 
 ### Running Tests
 * **All Tests:** `flutter test`
@@ -1119,13 +1215,14 @@ void main() {
 
 #### Testing Presentation - Pages
 
-Test UI rendering, validation, and user interactions.
+Test UI rendering, validation, and user interactions. Use test helpers to reduce boilerplate.
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../../helpers/test_helpers.dart';
 
 class MockLoginCubit extends MockCubit<LoginState> implements LoginCubit {}
 class MockAppCubit extends Mock implements AppCubit {}
@@ -1135,22 +1232,24 @@ void main() {
   late MockAppCubit mockAppCubit;
 
   setUp(() {
+    TestWindowConfig.setupWindowSize();
     mockLoginCubit = MockLoginCubit();
     mockAppCubit = MockAppCubit();
     when(() => mockLoginCubit.state).thenReturn(const LoginState.initial());
     when(() => mockAppCubit.login(any())).thenAnswer((_) async {});
   });
 
+  tearDown(() {
+    TestWindowConfig.resetWindowSize();
+  });
+
   Widget createApp() {
-    return MaterialApp(
-      localizationsDelegates: const [I18nEn.delegate, I18nId.delegate],
-      home: MultiBlocProvider(
-        providers: [
-          BlocProvider<LoginCubit>.value(value: mockLoginCubit),
-          BlocProvider<AppCubit>.value(value: mockAppCubit),
-        ],
-        child: const LoginScreen(),
-      ),
+    return TestWidgetBuilder.buildMaterialAppWithMultiProviders(
+      providers: [
+        BlocProvider<LoginCubit>.value(value: mockLoginCubit),
+        BlocProvider<AppCubit>.value(value: mockAppCubit),
+      ],
+      child: const LoginScreen(),
     );
   }
 
@@ -1296,10 +1395,26 @@ void main() {
 * Use `verifyNever()` to ensure methods weren't called in error scenarios
 
 #### Test Organization
-* **Arrange-Act-Assert Pattern:** Structure all tests with clear AAA sections
+* **Arrange-Act-Assert Pattern:** Structure tests logically but avoid excessive comments
 * **Group Related Tests:** Use `group()` to organize related test cases
 * **setUp/tearDown:** Use for common setup and cleanup
 * **setUpAll/tearDownAll:** Use for expensive one-time setup
+* **Comment Guidelines:**
+  * Remove `// Arrange`, `// Act`, `// Assert` section markers - test structure should be self-evident
+  * Avoid inline explanatory comments like `// 6 shimmer placeholders` when the expect statement is clear
+  * Keep only essential comments that explain non-obvious test logic or workarounds
+  * Example of clean test:
+    ```dart
+    testWidgets('should display loading grid when state is forecastLoading', (tester) async {
+      when(() => mockCubit.state).thenReturn(const DashboardState.forecastLoading());
+      
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump();
+      
+      expect(find.byType(SliverGrid), findsOneWidget);
+      expect(find.byType(Shimmer), findsNWidgets(6));
+    });
+    ```
 
 #### Widget Test Helpers
 * **MaterialApp Wrapper:** Always wrap widgets with MaterialApp for proper context
@@ -1307,6 +1422,31 @@ void main() {
 * **BlocProvider:** Use MultiBlocProvider for widgets depending on multiple cubits
 * **pumpAndSettle:** Wait for all animations and async operations
 * **pump:** Trigger a single frame rebuild
+
+#### Flutter API Updates
+* **Window Configuration (Flutter 3.9+):** Use the new multi-window API instead of deprecated window properties:
+  ```dart
+  // ❌ Deprecated (Flutter < 3.9)
+  TestWidgetsFlutterBinding.instance.window.physicalSize = Size(1080, 1920);
+  TestWidgetsFlutterBinding.instance.window.devicePixelRatio = 1.0;
+  
+  // ✅ Current (Flutter 3.9+)
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  binding.platformDispatcher.views.first.physicalSize = Size(1080, 1920);
+  binding.platformDispatcher.views.first.devicePixelRatio = 1.0;
+  
+  // ✅ Best practice - use TestWindowConfig helper
+  TestWindowConfig.setupWindowSize();
+  ```
+* **Reset After Tests:** Always reset window properties in tearDown:
+  ```dart
+  tearDown(() {
+    TestWindowConfig.resetWindowSize();
+    // Or manually:
+    // binding.platformDispatcher.views.first.resetPhysicalSize();
+    // binding.platformDispatcher.views.first.resetDevicePixelRatio();
+  });
+  ```
 
 ### Code Coverage
 

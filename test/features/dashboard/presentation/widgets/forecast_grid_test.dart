@@ -49,10 +49,7 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return ScreenUtilInit(
-      designSize: const Size(
-        1080,
-        1920,
-      ),
+      designSize: const Size(1080, 1920),
       builder: (context, child) => MaterialApp(
         locale: const Locale('en', 'US'),
         localizationsDelegates: const [I18nDelegate()],
