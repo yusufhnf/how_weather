@@ -9,7 +9,10 @@ See the app in action:
 <details>
    <summary>Click to view demo</summary>
    <video src="assets/simulate.mov" controls width="320"></video>
+   <p>Alternatively, <a href="assets/simulate.mov">view the video file</a></p>
 </details>
+
+[View demo video on Google Drive](https://drive.google.com/file/d/1AOnVbnVhu01XrkR5Ovr-MUPRdVXSmuVi/view?usp=sharing)
 
 ## 📱 About
 
