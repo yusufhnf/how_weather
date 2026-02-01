@@ -118,6 +118,7 @@ test/
 
 2. **Add environment variables**
    - Create `.env` file in the root of project and fill in required values (API keys, etc.)
+   - The Weather service using OpenWeatherMap.org, so you can generate the API Key from https://home.openweathermap.org/api_keys
    - Example `.env` content:
      ```env
      WEATHER_API_KEY=your_api_key_here
